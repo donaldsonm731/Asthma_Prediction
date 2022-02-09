@@ -10,3 +10,102 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Practicum of Data Analytics Project
+
+```{r}
+# Importing the data set and printing the first 6 rows to see what it looks like
+asthmaDataOriginal= read.csv("Asthma_Data_File.csv")
+asthmaData = asthmaDataOriginal
+head(asthmaData)
+
+```
+## Data Description
+The first summary doesn't give us to much information because half the inputs are strings,
+So, before looking at the properties of each feature we need to convert the strings to integers.
+```{r}
+# Summary gives a description for each input and output, giving you a sense of what the data looks like
+summary(asthmaData)
+
+```
+```{r}
+### Converting all strings to integers ###
+
+## Can access a certain column either by a their name or column number
+#asthmaData['ACTScore']
+#asthmaData[14]
+#asthmaData$SmokingHabit
+
+###################################################################
+
+
+#asthmaData$UserNo. = NULL
+asthmaData$UserID = NULL
+asthmaData$Location = NULL ### Should we make it null??????????????????
+
+## Changing age
+asthmaData$Age[asthmaData$Age == 'Above 50'] = 4 
+asthmaData$Age[asthmaData$Age == '41-50'] = 3
+asthmaData$Age[asthmaData$Age == '31-40'] = 2 
+asthmaData$Age[asthmaData$Age == '19-30'] = 1
+
+## The above transformation still kept elements as char so 'as.integer' converts the char to int
+asthmaData$Age = as.integer(asthmaData$Age)
+
+# Gender,  binary, yes = 1 and no = 0
+## DOES IT MATTER IF WE CHOOSE 0 AND 1 or -1 AND 1 ??????????????????????
+asthmaData$Gender[asthmaData$Gender == 'Female'] = 1
+asthmaData$Gender[asthmaData$Gender == 'Male'] = -1
+
+asthmaData$Gender = as.integer(asthmaData$Gender)
+
+# changing outdoor job
+asthmaData$OutdoorJob[asthmaData$OutdoorJob == 'Frequently'] = 3
+asthmaData$OutdoorJob[asthmaData$OutdoorJob == 'Occasionally'] = 2
+asthmaData$OutdoorJob[asthmaData$OutdoorJob == 'Rarely'] = 1
+
+asthmaData$OutdoorJob = as.integer(asthmaData$OutdoorJob)
+
+# Outdoor activity
+asthmaData$OutdoorActivities[asthmaData$OutdoorActivities == 'Extremely likely'] = 3
+asthmaData$OutdoorActivities[asthmaData$OutdoorActivities == 'Neither likely or dislikely'] = 2
+asthmaData$OutdoorActivities[asthmaData$OutdoorActivities == 'Not at all likely'] = 1
+
+asthmaData$OutdoorActivities = as.integer(asthmaData$OutdoorActivities)
+# Since smoking was binary, yes = 1 and no = 0
+asthmaData$SmokingHabit[asthmaData$SmokingHabit == "Yes"] = 1
+asthmaData$SmokingHabit[asthmaData$SmokingHabit == "No"] = 0
+
+asthmaData$SmokingHabit = as.integer(asthmaData$SmokingHabit)
+# UV Index, binary
+asthmaData$UVIndex[asthmaData$UVIndex == 'Extreme'] = 1
+asthmaData$UVIndex[asthmaData$UVIndex == 'Low'] = 0
+
+asthmaData$UVIndex = as.integer(asthmaData$UVIndex)
+
+
+str(asthmaData) # str is nice because it gives type of each input
+summary(asthmaData) # Summary is good to see median, mean, min, max...
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
