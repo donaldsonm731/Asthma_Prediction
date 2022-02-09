@@ -12,4 +12,7 @@ IMPORTANT STEPS TO TAKE WHEN USING THIS FILE:
 	- Then type git pull, this will get the most up to date version
 
 2. ALWAYS PUSH AT THE END OF WORKING
-	- In command prompt once in project folder type git push.
+	- In command prompt once in project folder type:
+		- git add . (for all files) or git add filename (for one file)  
+		- git commit -m'put_message_here'
+                - git push
