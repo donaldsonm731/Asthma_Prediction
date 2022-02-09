@@ -1,0 +1,12 @@
+---
+title: "Asthma Attack Predictions"
+author: "Kadie Iverson & Matthew Donaldson"
+date: "2/8/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Practicum of Data Analytics Project
