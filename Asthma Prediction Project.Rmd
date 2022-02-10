@@ -41,7 +41,7 @@ summary(asthmaData)
 
 #asthmaData$UserNo. = NULL
 asthmaData$UserID = NULL
-asthmaData$Location = NULL ### Should we make it null??????????????????
+#asthmaData$Location = NULL ### Should we make it null??????????????????
 
 ## Changing age
 asthmaData$Age[asthmaData$Age == 'Above 50'] = 4 
@@ -55,7 +55,7 @@ asthmaData$Age = as.integer(asthmaData$Age)
 # Gender,  binary, yes = 1 and no = 0
 ## DOES IT MATTER IF WE CHOOSE 0 AND 1 or -1 AND 1 ??????????????????????
 asthmaData$Gender[asthmaData$Gender == 'Female'] = 1
-asthmaData$Gender[asthmaData$Gender == 'Male'] = -1
+asthmaData$Gender[asthmaData$Gender == 'Male'] = 0
 
 asthmaData$Gender = as.integer(asthmaData$Gender)
 
