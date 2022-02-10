@@ -9,6 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Hello!
+
 ## Practicum of Data Analytics Project
 
 ```{r}
