@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 # Importing the data set and printing the first 6 rows to see what it looks like
 asthmaDataOriginal= read.csv("Asthma_Data_File.csv")
-asthmaData = asthmaDataOriginal
+asthmaData = data.frame(asthmaDataOriginal[,-c(1,2,3)])
 head(asthmaData)
 
 ```
@@ -37,12 +37,6 @@ summary(asthmaData)
 #asthmaData$SmokingHabit
 
 ###################################################################
-
-
-#asthmaData$UserNo. = NULL
-asthmaData$UserID = NULL
-#asthmaData$Location = NULL ### Should we make it null??????????????????
-
 
 ## Changing age
 asthmaData$Age[asthmaData$Age == 'Above 50'] = 4 
@@ -131,10 +125,12 @@ boxplot(asthmaData$WindSpeed~asthmaData$ACTScore,data=asthmaData)
 COMMENT...
 
 ```{r}
+library(corrplot)
+cor = cor(asthmaData, method = c("pearson", "kendall", "spearman"))
+corrplot(cor, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
 
-
-head(asthmaData)
-#eatmap(asthmaData)
+heatmap(cor, sym = TRUE)
 ```
 
 
