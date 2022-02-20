@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Hello!
+
 
 ## Practicum of Data Analytics Project
 
@@ -43,6 +43,7 @@ summary(asthmaData)
 asthmaData$UserID = NULL
 #asthmaData$Location = NULL ### Should we make it null??????????????????
 
+
 ## Changing age
 asthmaData$Age[asthmaData$Age == 'Above 50'] = 4 
 asthmaData$Age[asthmaData$Age == '41-50'] = 3
@@ -55,7 +56,7 @@ asthmaData$Age = as.integer(asthmaData$Age)
 # Gender,  binary, yes = 1 and no = 0
 ## DOES IT MATTER IF WE CHOOSE 0 AND 1 or -1 AND 1 ??????????????????????
 asthmaData$Gender[asthmaData$Gender == 'Female'] = 1
-asthmaData$Gender[asthmaData$Gender == 'Male'] = 0
+asthmaData$Gender[asthmaData$Gender == 'Male'] = -1
 
 asthmaData$Gender = as.integer(asthmaData$Gender)
 
@@ -82,16 +83,59 @@ asthmaData$UVIndex[asthmaData$UVIndex == 'Extreme'] = 1
 asthmaData$UVIndex[asthmaData$UVIndex == 'Low'] = 0
 
 asthmaData$UVIndex = as.integer(asthmaData$UVIndex)
+```
 
+```{r}
 
 str(asthmaData) # str is nice because it gives type of each input
 summary(asthmaData) # Summary is good to see median, mean, min, max...
 ```
+COMMENT ON ABOVE SUMMARY...
+
+
+```{r}
+
+hist(asthmaData$Age, breaks = 25)
+hist(asthmaData$Gender, breaks = 25)
+hist(asthmaData$OutdoorJob, breaks = 25)
+hist(asthmaData$OutdoorActivities, breaks = 25)
+hist(asthmaData$SmokingHabit, breaks = 25)
+hist(asthmaData$Humidity, breaks = 25)
+hist(asthmaData$Pressure, breaks = 25)
+hist(asthmaData$Temperature, breaks = 50)
+hist(asthmaData$UVIndex, breaks = 25)
+hist(asthmaData$WindSpeed, breaks = 25)
+
+
+
+```
+COMMENT ON ABOVE HISTOGRAMS...
+
+```{r}
+
+boxplot(asthmaData$Age~asthmaData$ACTScore,data=asthmaData)
+boxplot(asthmaData$Gender~asthmaData$ACTScore,data=asthmaData)
+boxplot(asthmaData$OutdoorJob~asthmaData$ACTScore,data=asthmaData)
+boxplot(asthmaData$OutdoorActivities~asthmaData$ACTScore,data=asthmaData)
+boxplot(asthmaData$SmokingHabit~asthmaData$ACTScore,data=asthmaData)
+boxplot(asthmaData$Humidity~asthmaData$ACTScore,data=asthmaData)
+boxplot(asthmaData$Pressure~asthmaData$ACTScore,data=asthmaData)
+boxplot(asthmaData$Temperature~asthmaData$ACTScore,data=asthmaData)
+boxplot(asthmaData$UVIndex~asthmaData$ACTScore,data=asthmaData)
+boxplot(asthmaData$WindSpeed~asthmaData$ACTScore,data=asthmaData)
 
 
 
 
+```
+COMMENT...
 
+```{r}
+
+
+head(asthmaData)
+#eatmap(asthmaData)
+```
 
 
 
