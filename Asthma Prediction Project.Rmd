@@ -9,20 +9,20 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
+***Next Steps: Find outliers based on approaches discussed in class and hw. ***
 
 ## Practicum of Data Analytics Project
 
 ```{r}
 # Importing the data set and printing the first 6 rows to see what it looks like
 asthmaDataOriginal= read.csv("Asthma_Data_File.csv")
+# Removing first couple of row because they only identify particapant, no useful features. 
 asthmaData = data.frame(asthmaDataOriginal[,-c(1,2,3)])
 head(asthmaData)
 
 ```
 ## Data Description
-The first summary doesn't give us to much information because half the inputs are strings,
-So, before looking at the properties of each feature we need to convert the strings to integers.
+The first summary doesn't give us to much information because half the inputs are strings. So, before looking at the properties of each feature we need to convert the strings to integers.
 ```{r}
 # Summary gives a description for each input and output, giving you a sense of what the data looks like
 summary(asthmaData)
@@ -78,13 +78,15 @@ asthmaData$UVIndex[asthmaData$UVIndex == 'Low'] = 0
 
 asthmaData$UVIndex = as.integer(asthmaData$UVIndex)
 ```
-
+Once all the data is converted into integers a summary is then done again to get some information out of the features.
 ```{r}
 
 str(asthmaData) # str is nice because it gives type of each input
 summary(asthmaData) # Summary is good to see median, mean, min, max...
 ```
-COMMENT ON ABOVE SUMMARY...
+As seen in the summary above, out door job, pressure and temperature seem to be the only features that have almost the same mean and median. This tells us that a lot of our data is not normally distributed. Also, it will be important to keep in mind that some of this data is binary while other are have discrete categories like out door activities which can carry values 1,2 or 3. 
+
+Another way to check to see how the data is distributed is by looking at a histogram. Below in the histograms shows that the many of the data features are in deed not normal and most actually are discrete. One important part to notice here is that temperature doesn't actually follow a normal distribution as assumed earlier from the summary statistics. Also, interestingly enough, the humidity data looks to have a heavy left tail with the bulk of the data being on the right side, which is reflected in the summary above as the median is higher than the mean. 
 
 
 ```{r}
@@ -96,15 +98,14 @@ hist(asthmaData$OutdoorActivities, breaks = 25)
 hist(asthmaData$SmokingHabit, breaks = 25)
 hist(asthmaData$Humidity, breaks = 25)
 hist(asthmaData$Pressure, breaks = 25)
-hist(asthmaData$Temperature, breaks = 50)
+hist(asthmaData$Temperature, breaks = 25)
 hist(asthmaData$UVIndex, breaks = 25)
 hist(asthmaData$WindSpeed, breaks = 25)
 
 
 
 ```
-COMMENT ON ABOVE HISTOGRAMS...
-
+To get a better understanding the distribution of the features a box plot was made. Similar to the histograms it allows us to see if the data is skewed, the mean, median and if any categories can be separated based on a feature. One thing that I am not so sure about is using it on discrete data. I don't feel as though it contributes as much information than say temperature which is more continuous. 
 ```{r}
 
 boxplot(asthmaData$Age~asthmaData$ACTScore,data=asthmaData)
@@ -118,11 +119,9 @@ boxplot(asthmaData$Temperature~asthmaData$ACTScore,data=asthmaData)
 boxplot(asthmaData$UVIndex~asthmaData$ACTScore,data=asthmaData)
 boxplot(asthmaData$WindSpeed~asthmaData$ACTScore,data=asthmaData)
 
-
-
-
 ```
-COMMENT...
+
+Lastly, A correlation matrix and heat map were made to get a sense on how dependent each input was with one another. A couple of the most important observations are that gender and age seem to have a strong negative correlation while others like out door activate and age don't have much correlation. Note the method used shows linear dependence, so the data may share a higher order dependence. 
 
 ```{r}
 library(corrplot)
