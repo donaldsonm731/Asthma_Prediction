@@ -16,10 +16,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 # Importing the data set and printing the first 6 rows to see what it looks like
 asthmaDataOriginal= read.csv("Asthma_Data_File.csv")
-# Removing first couple of row because they only identify particapant, no useful features. 
+# Removing first couple of columns because they only identify participant, no useful features. 
 asthmaData = data.frame(asthmaDataOriginal[,-c(1,2,3)])
 head(asthmaData)
-
 ```
 ## Data Description
 The first summary doesn't give us to much information because half the inputs are strings. So, before looking at the properties of each feature we need to convert the strings to integers.
@@ -50,7 +49,7 @@ asthmaData$Age = as.integer(asthmaData$Age)
 # Gender,  binary, yes = 1 and no = 0
 ## DOES IT MATTER IF WE CHOOSE 0 AND 1 or -1 AND 1 ??????????????????????
 asthmaData$Gender[asthmaData$Gender == 'Female'] = 1
-asthmaData$Gender[asthmaData$Gender == 'Male'] = -1
+asthmaData$Gender[asthmaData$Gender == 'Male'] = 0
 
 asthmaData$Gender = as.integer(asthmaData$Gender)
 
@@ -84,6 +83,7 @@ Once all the data is converted into integers a summary is then done again to get
 str(asthmaData) # str is nice because it gives type of each input
 summary(asthmaData) # Summary is good to see median, mean, min, max...
 ```
+
 As seen in the summary above, out door job, pressure and temperature seem to be the only features that have almost the same mean and median. This tells us that a lot of our data is not normally distributed. Also, it will be important to keep in mind that some of this data is binary while other are have discrete categories like out door activities which can carry values 1,2 or 3. 
 
 Another way to check to see how the data is distributed is by looking at a histogram. Below in the histograms shows that the many of the data features are in deed not normal and most actually are discrete. One important part to notice here is that temperature doesn't actually follow a normal distribution as assumed earlier from the summary statistics. Also, interestingly enough, the humidity data looks to have a heavy left tail with the bulk of the data being on the right side, which is reflected in the summary above as the median is higher than the mean. 
@@ -101,11 +101,10 @@ hist(asthmaData$Pressure, breaks = 25)
 hist(asthmaData$Temperature, breaks = 25)
 hist(asthmaData$UVIndex, breaks = 25)
 hist(asthmaData$WindSpeed, breaks = 25)
-
-
-
 ```
+
 To get a better understanding the distribution of the features a box plot was made. Similar to the histograms it allows us to see if the data is skewed, the mean, median and if any categories can be separated based on a feature. One thing that I am not so sure about is using it on discrete data. I don't feel as though it contributes as much information than say temperature which is more continuous. 
+
 ```{r}
 
 boxplot(asthmaData$Age~asthmaData$ACTScore,data=asthmaData)
@@ -132,14 +131,149 @@ corrplot(cor, type = "upper", order = "hclust",
 heatmap(cor, sym = TRUE)
 ```
 
+```{r}
+asthmaData.pca<-princomp(asthmaData)
+plot(asthmaData.pca, main="Proportions of variance explained by the components")
+```
+
+```{r}
+plot(asthmaData.pca$loadings[,1],ylim=c(-.7,.7))
+lines(asthmaData.pca$loadings[,1])
+```
+
+
+```{r}
+pairs(asthmaData)
+```
 
 
 
 
+Dixon Test
+```{r}
+X <- asthmaData[1:30,11]
+dixon.test(X,type=0,opposite=TRUE)
+dixon.test(X, type = 0, two.sided = TRUE)
+```
+
+Normal Score
+```{r}
+X <- asthmaData[,]
+
+Y <- scores(X,type="z",prob=0.95)
+length(Y[Y==TRUE])
+A <- which(Y == TRUE)
+```
+
+Median Absolute Deviation
+
+```{r}
+X <- asthmaData[,]
+
+#Displaying first 10 scores
+Y <- scores(X,type="mad",prob=0.95)
+length(Y[Y==TRUE])
+B <- which(Y == TRUE)
+```
 
 
+Interquantile range score
+check for the value of limit to be used
+
+```{r}
+X <- asthmaData[,]
+
+#Displaying first 10 scores
+Y <- scores(X,type="iqr",lim=2)
+length(Y[Y==TRUE])
+C <- which(Y == TRUE)
+```
+
+Depth-based Approach:
+
+```{r}
+X <- asthmaData[,]
+
+Y <- depthout(X,cutoff=0.05)
+D <- Y$`Location of Outlier`
+```
 
 
+Mahalanobis Distance
+
+```{r}
+X <- asthmaData[,]
+Y <- maha(X,cutoff=0.9)
+E <- Y$`Location of Outlier`
+```
+
+k Nearest Neighbours Distance method
+
+```{r}
+X <- asthmaData[,]
+Y <- nn(X,k=5)
+K <- Y$`Location of Outlier`
+```
+
+
+kth Nearest Neighbour Distance method
+
+```{r}
+X <- asthmaData[,]
+Y <- nnk(X,k=5)
+G <- Y$`Location of Outlier`
+```
+
+Outlier detection using Robust Kernal-based Outlier Factor(RKOF) algorithm
+
+```{r}
+X <- asthmaData[,]
+Y <- dens(X,k=4,C=1)
+H <- Y$`Location of Outlier`
+```
+
+
+Outlier detection using genralised dispersion
+
+```{r}
+X <- asthmaData[,]
+Y <- disp(X,cutoff=0.99)
+I <- Y$`Location of Outlier`
+```
+
+
+Join assessment of outlier detection methods
+
+```{r}
+X <- asthmaData[,]
+Y <- OutlierDetection(X)
+J <- Y$`Location of Outlier`
+```
+
+c) Report outlier based on consensus rule based on all the techniques that applied to your data sets.
+
+
+```{r}
+out_list <- append(A, B)
+out_list <- append(out_list, C)
+out_list <- append(out_list, D)
+out_list <- append(out_list, E)
+out_list <- append(out_list, K)
+out_list <- append(out_list, G)
+out_list <- append(out_list, H)
+out_list <- append(out_list, I)
+out_list <- append(out_list, J)
+
+length(out_list)
+```
+
+
+```{r}
+L <- as.data.frame(table(out_list))
+M <- L$Freq > 5
+N <- which(M == TRUE)
+length(N)
+```
 
 
 
