@@ -132,17 +132,6 @@ heatmap(cor, sym = TRUE)
 ```
 
 ```{r}
-asthmaData.pca<-princomp(asthmaData)
-plot(asthmaData.pca, main="Proportions of variance explained by the components")
-```
-
-```{r}
-plot(asthmaData.pca$loadings[,1],ylim=c(-.7,.7))
-lines(asthmaData.pca$loadings[,1])
-```
-
-
-```{r}
 pairs(asthmaData)
 ```
 
@@ -276,8 +265,81 @@ length(N)
 ```
 
 
+################################################################################
+## PCA Analysis
+
+```{r}
+####  Step 1: Standardization ####
+# This standardizes the data with z = (value - mean)/sd
+asthmaData_scaled = scale(asthmaData[,0:10]) # This standardizes the input data 
+#summary(asthmaData_scaled) # Checking standardization
+
+#### Step 2: Finding Cov matrix ####
+cov_matrix = cov(asthmaData_scaled)
+#cov_matrix # Checking cov_matrix
+```
 
 
+```{r}
+#### Step 3: Computing eigen values and eigenvectors of Cov-matrix to identify principle components ###
+eigen = eigen(cov_matrix)
+# eigen$vectors and eigen$values for the vectors and values
+#eigen$values # Looks like the eigen values are already ordered
+
+#### Step 4: Seeing percentage of variance accounted for by each comp. ####
+plot(eigen$values)
+```
+
+```{r}
+#### Selecting amount of features we want #### In this case firest 8 features
+                                             # capture ~95% var
+
+# First find the percent variance in each 
+sum_eig = sum(eigen$values)
+per_var = eigen$values/sum_eig
+#print(per_var) # Gives percentage of variance in each component
+# We will select amount of components that gives us at least 95% of the variance
+
+# From the output this can be seen to be the first 8 eigen values.
+#sum(per_var[0:7])
+
+featureVector = eigen$vectors[,0:7] # Getting features we want
+dim(asthmaData_scaled)
+dim(featureVector)
+asthmaData.pca = asthmaData_scaled %*% featureVector # Transforming Data
+```
+
+
+
+```{r}
+#### Checking work from above #### Do Not USe
+
+#asthmaData.pca<-princomp(asthmaData_scaled[])
+#plot(asthmaData.pca, main="Proportions of variance explained by the components")
+#head(asthmaData.pca)
+head(asthmaData[,11])
+```
+
+## Trying a linear regression
+```{r}
+# y = b0 + b1*v1 + b2*v2 ... + bn*vn
+asthmaData.pca = cbind(asthmaData.pca, asthmaData[,11])
+#head(asthmaData.pca)
+
+v1 = asthmaData.pca[,1]
+v2 = asthmaData.pca[,2]
+v3 = asthmaData.pca[,3]
+v4 = asthmaData.pca[,4]
+v5 = asthmaData.pca[,5]
+v6 = asthmaData.pca[,6]
+v7 = asthmaData.pca[,7]
+
+y = asthmaData.pca[,8]
+
+fit = lm(y ~ v1 + v2 + v3 + v4 + v5 + v6 + v7)
+
+summary(fit)
+```
 
 
 
