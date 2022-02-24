@@ -165,9 +165,10 @@ Normal Score
 ```{r}
 X <- asthmaData[,]
 
-Y <- scores(X,type="z",prob=0.95)
-length(Y[Y==TRUE])
-A <- which(Y == TRUE)
+#Y <- scores(X,type="z",prob=0.95)
+#length(Y[Y==TRUE])
+#A <- which(Y == TRUE)
+scores(x,type="z", prob = 0.95)
 ```
 
 Median Absolute Deviation
@@ -307,8 +308,7 @@ plot(eigen$values)
 ```
 
 ```{r}
-#### Selecting amount of features we want #### In this case firest 8 features
-                                             # capture ~95% var
+#### Selecting amount of features we want #### 
 
 # First find the percent variance in each 
 sum_eig = sum(eigen$values)
@@ -326,6 +326,28 @@ asthmaData.pca = asthmaData_scaled %*% featureVector # Transforming Data
 
 ## Adding the output column back in
 asthmaData.pca = cbind(asthmaData.pca, asthmaData[,11])
+
+```
+
+```{r}
+x = asthmaData.pca[,1:8]
+y = dens(x,k=4,C=20)
+
+```
+
+
+```{r}
+# generalized dispersion
+ol = disp(x,cutoff=0.05)
+ol$`Location of Outlier`
+
+```
+
+```{r}
+index = OutlierDetection(x)$`Location of Outlier`
+index = as.array(index)
+asthmaData.pca = asthmaData.pca[-index]
+
 ```
 
 
@@ -361,56 +383,58 @@ v7 = train[,7]
 
 y = train[,8]
 
-train_fit = lm(y ~ v1 + v2 + v3 + v4 + v5 + v6 + v7)
+fit = lm(y ~ v1 + v2 + v3 + v4 + v5 + v6 + v7)
 
-summary(train_fit)
+summary(fit)
 ```
 ```{r}
 #Residuals
-resid = train_fit$residuals
+resid = fit$residuals
 #R^2 value
-r_sq = summary(train_fit)$r.squared
+r_sq = summary(fit)$r.squared
 # F-Test Statistic
-F_stat = summary(train_fit)$fstat
+F_stat = summary(fit)$fstat
 # C.I. for regression CO
-coef_CI = confint(train_fit)
+coef_CI = confint(fit)
 
 # Note the outputs below give an insight into how our model is doing. 
 # we see an r^2 or 0.674
-anova(train_fit)
+anova(fit)
 
-print(sum((resid))^2)
+print(sum((resid)^2))
 print(r_sq)
 print(F_stat)
 print(coef_CI)
 
-vcov(train_fit) # Last one is interesting to see, bc using PCA they should be around 0
+vcov(fit) # Last one is interesting to see, bc using PCA they should be around 0
 ```
 
 ## Predicting Values
 ```{r}
-b0 = train_fit$coefficients[1]
-b = train_fit$coefficients[2:8]
+b0 = fit$coefficients[1]
+b = fit$coefficients[2:8]
 x = test[1,1:7]
 y_pred = b0 + b %*% x
+y_pred
 ```
 
 ```{r}
 # Testing Prediction with r function, the prediction is the same...
 # But look at how big the prediction interval is!!!
 newdata = data.frame(test[,1:7])
-predictions = predict(train_fit,newdata,interval = "prediction")
+predictions = predict(fit,newdata,interval = "prediction")
 ```
+
 
 ```{r}
 # Getting MSE of our predicted values
 y_true = test[,8]
 
-y_predicted = predictions[,1]
-
-error = y_true - y_predicted
-MSE = sum(error^2)
-MSE
+y_predicted = predictions[1,]
+y_predicted
+#error = y_true - y_predicted
+#MSE = sum(error^2)
+#MSE
 
 
 ```
