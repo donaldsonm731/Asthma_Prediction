@@ -9,10 +9,16 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-***Next Steps: Find outliers based on approaches discussed in class and hw. ***
+Questions to answer: 
+- If using PCA, can we then use univariate outlier detection methods?
+- What are our outliers?
+- Can we find the minimum in the bias variance trade off?
+- Other prediction methods to explore: Poly Regression, Random Forest or regular decision trees, SVM... 
+        
 
 ## Practicum of Data Analytics Project
-
+################################################################################
+First part is just importing and data visualization
 ```{r}
 # Importing the data set and printing the first 6 rows to see what it looks like
 asthmaDataOriginal= read.csv("Asthma_Data_File.csv")
@@ -130,6 +136,15 @@ corrplot(cor, type = "upper", order = "hclust",
 
 heatmap(cor, sym = TRUE)
 ```
+################################################################################
+## OUTLIER DETECTION METHODS
+
+```{r}
+library(OutlierDetection)
+library(OutliersO3)
+library(outliers)
+```
+
 
 ```{r}
 pairs(asthmaData)
@@ -139,6 +154,7 @@ pairs(asthmaData)
 
 
 Dixon Test
+
 ```{r}
 X <- asthmaData[1:30,11]
 dixon.test(X,type=0,opposite=TRUE)
@@ -222,7 +238,7 @@ H <- Y$`Location of Outlier`
 ```
 
 
-Outlier detection using genralised dispersion
+Outlier detection using generalised dispersion
 
 ```{r}
 X <- asthmaData[,]
@@ -231,7 +247,7 @@ I <- Y$`Location of Outlier`
 ```
 
 
-Join assessment of outlier detection methods
+Joint assessment of outlier detection methods
 
 ```{r}
 X <- asthmaData[,]
@@ -304,9 +320,12 @@ per_var = eigen$values/sum_eig
 #sum(per_var[0:7])
 
 featureVector = eigen$vectors[,0:7] # Getting features we want
-dim(asthmaData_scaled)
-dim(featureVector)
+#dim(asthmaData_scaled)
+#dim(featureVector)
 asthmaData.pca = asthmaData_scaled %*% featureVector # Transforming Data
+
+## Adding the output column back in
+asthmaData.pca = cbind(asthmaData.pca, asthmaData[,11])
 ```
 
 
@@ -316,33 +335,82 @@ asthmaData.pca = asthmaData_scaled %*% featureVector # Transforming Data
 
 #asthmaData.pca<-princomp(asthmaData_scaled[])
 #plot(asthmaData.pca, main="Proportions of variance explained by the components")
-#head(asthmaData.pca)
-head(asthmaData[,11])
-```
 
-## Trying a linear regression
+
+```
+################################################################################
+
+## Trying a multivariate linear regression
 ```{r}
 # y = b0 + b1*v1 + b2*v2 ... + bn*vn
-asthmaData.pca = cbind(asthmaData.pca, asthmaData[,11])
+
 #head(asthmaData.pca)
+## Creating and training and test data set.
+dt = sort(sample(nrow(asthmaData.pca), nrow(asthmaData.pca)*.7))
+train = asthmaData.pca[dt,]
+test = asthmaData.pca[dt,]
 
-v1 = asthmaData.pca[,1]
-v2 = asthmaData.pca[,2]
-v3 = asthmaData.pca[,3]
-v4 = asthmaData.pca[,4]
-v5 = asthmaData.pca[,5]
-v6 = asthmaData.pca[,6]
-v7 = asthmaData.pca[,7]
 
-y = asthmaData.pca[,8]
+v1 = train[,1]
+v2 = train[,2]
+v3 = train[,3]
+v4 = train[,4]
+v5 = train[,5]
+v6 = train[,6]
+v7 = train[,7]
 
-fit = lm(y ~ v1 + v2 + v3 + v4 + v5 + v6 + v7)
+y = train[,8]
 
-summary(fit)
+train_fit = lm(y ~ v1 + v2 + v3 + v4 + v5 + v6 + v7)
+
+summary(train_fit)
+```
+```{r}
+#Residuals
+resid = train_fit$residuals
+#R^2 value
+r_sq = summary(train_fit)$r.squared
+# F-Test Statistic
+F_stat = summary(train_fit)$fstat
+# C.I. for regression CO
+coef_CI = confint(train_fit)
+
+# Note the outputs below give an insight into how our model is doing. 
+# we see an r^2 or 0.674
+anova(train_fit)
+
+print(sum((resid))^2)
+print(r_sq)
+print(F_stat)
+print(coef_CI)
+
+vcov(train_fit) # Last one is interesting to see, bc using PCA they should be around 0
 ```
 
+## Predicting Values
+```{r}
+b0 = train_fit$coefficients[1]
+b = train_fit$coefficients[2:8]
+x = test[1,1:7]
+y_pred = b0 + b %*% x
+```
+
+```{r}
+# Testing Prediction with r function, the prediction is the same...
+# But look at how big the prediction interval is!!!
+newdata = data.frame(test[,1:7])
+predictions = predict(train_fit,newdata,interval = "prediction")
+```
+
+```{r}
+# Getting MSE of our predicted values
+y_true = test[,8]
+
+y_predicted = predictions[,1]
+
+error = y_true - y_predicted
+MSE = sum(error^2)
+MSE
 
 
-
-
-
+```
