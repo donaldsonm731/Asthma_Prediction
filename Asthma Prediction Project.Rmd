@@ -83,6 +83,7 @@ asthmaData$UVIndex[asthmaData$UVIndex == 'Low'] = 0
 
 asthmaData$UVIndex = as.integer(asthmaData$UVIndex)
 ```
+
 Once all the data is converted into integers a summary is then done again to get some information out of the features.
 ```{r}
 
@@ -151,109 +152,86 @@ pairs(asthmaData)
 ```
 
 
+#End of visualization of the data
 
+##################################################################################
+# OUtlier Detection
+# -Note: all the univariate statistical tests were excluded from this because  
+#  our data inputs are correlated
 
-Dixon Test
-
-```{r}
-X <- asthmaData[1:30,11]
-dixon.test(X,type=0,opposite=TRUE)
-dixon.test(X, type = 0, two.sided = TRUE)
-```
-
-Normal Score
-```{r}
-X <- asthmaData[,]
-
-#Y <- scores(X,type="z",prob=0.95)
-#length(Y[Y==TRUE])
-#A <- which(Y == TRUE)
-scores(x,type="z", prob = 0.95)
-```
-
-Median Absolute Deviation
-
-```{r}
-X <- asthmaData[,]
-
-#Displaying first 10 scores
-Y <- scores(X,type="mad",prob=0.95)
-length(Y[Y==TRUE])
-B <- which(Y == TRUE)
-```
-
-
-Interquantile range score
-check for the value of limit to be used
-
-```{r}
-X <- asthmaData[,]
-
-#Displaying first 10 scores
-Y <- scores(X,type="iqr",lim=2)
-length(Y[Y==TRUE])
-C <- which(Y == TRUE)
-```
 
 Depth-based Approach:
-
 ```{r}
-X <- asthmaData[,]
+X <- asthmaData[,1:10]
 
-Y <- depthout(X,cutoff=0.05)
+Y <- depthout(X,cutoff=0.03) # This yields about 3% of our data as outliers
 D <- Y$`Location of Outlier`
+D
 ```
-
-
+# I don't think distance should be used here because we are working in a high dimension
+# But kept them in to discuss.
 Mahalanobis Distance
 
 ```{r}
-X <- asthmaData[,]
-Y <- maha(X,cutoff=0.9)
+Y <- maha(X,cutoff=0.95)
 E <- Y$`Location of Outlier`
+E
 ```
 
 k Nearest Neighbours Distance method
 
 ```{r}
-X <- asthmaData[,]
+
 Y <- nn(X,k=5)
 K <- Y$`Location of Outlier`
+K
 ```
 
 
 kth Nearest Neighbour Distance method
 
 ```{r}
-X <- asthmaData[,]
+
 Y <- nnk(X,k=5)
 G <- Y$`Location of Outlier`
+G
+```
+```{r}
+intersect(K,G)
+
 ```
 
 Outlier detection using Robust Kernal-based Outlier Factor(RKOF) algorithm
 
 ```{r}
-X <- asthmaData[,]
+
 Y <- dens(X,k=4,C=1)
 H <- Y$`Location of Outlier`
+H
 ```
 
 
 Outlier detection using generalised dispersion
 
 ```{r}
-X <- asthmaData[,]
+
 Y <- disp(X,cutoff=0.99)
 I <- Y$`Location of Outlier`
+I
+```
+```{r}
+intersect(I,H)
+
 ```
 
 
 Joint assessment of outlier detection methods
 
 ```{r}
-X <- asthmaData[,]
-Y <- OutlierDetection(X)
+
+Y <- OutlierDetection(X,depth = TRUE,dens = TRUE)
 J <- Y$`Location of Outlier`
+J
 ```
 
 c) Report outlier based on consensus rule based on all the techniques that applied to your data sets.
@@ -288,7 +266,8 @@ length(N)
 ```{r}
 ####  Step 1: Standardization ####
 # This standardizes the data with z = (value - mean)/sd
-asthmaData_scaled = scale(asthmaData[,0:10]) # This standardizes the input data 
+#head(asthmaData[,1:10])
+asthmaData_scaled = scale(asthmaData[,1:10]) # This standardizes the input data 
 #summary(asthmaData_scaled) # Checking standardization
 
 #### Step 2: Finding Cov matrix ####
@@ -319,7 +298,7 @@ per_var = eigen$values/sum_eig
 # From the output this can be seen to be the first 8 eigen values.
 #sum(per_var[0:7])
 
-featureVector = eigen$vectors[,0:7] # Getting features we want
+featureVector = eigen$vectors[,1:7] # Getting features we want
 #dim(asthmaData_scaled)
 #dim(featureVector)
 asthmaData.pca = asthmaData_scaled %*% featureVector # Transforming Data
@@ -329,9 +308,13 @@ asthmaData.pca = cbind(asthmaData.pca, asthmaData[,11])
 
 ```
 
+###############################################################################
+# Outlier detetion on Transformed data
 ```{r}
-x = asthmaData.pca[,1:8]
-y = dens(x,k=4,C=20)
+#head(asthmaData.pca)
+x = asthmaData.pca[,1:7]
+y = dens(x,k=4,C=1)
+y$`Location of Outlier`
 
 ```
 
@@ -345,15 +328,14 @@ ol$`Location of Outlier`
 
 ```{r}
 index = OutlierDetection(x)$`Location of Outlier`
-index = as.array(index)
-asthmaData.pca = asthmaData.pca[-index]
+
 
 ```
 
 
 
 ```{r}
-#### Checking work from above #### Do Not USe
+#### Checking work from above #### 
 
 #asthmaData.pca<-princomp(asthmaData_scaled[])
 #plot(asthmaData.pca, main="Proportions of variance explained by the components")
@@ -414,6 +396,9 @@ vcov(fit) # Last one is interesting to see, bc using PCA they should be around 0
 b0 = fit$coefficients[1]
 b = fit$coefficients[2:8]
 x = test[1,1:7]
+test[1,8]
+test[2,8]
+test[3,8]
 y_pred = b0 + b %*% x
 y_pred
 ```
@@ -423,6 +408,9 @@ y_pred
 # But look at how big the prediction interval is!!!
 newdata = data.frame(test[,1:7])
 predictions = predict(fit,newdata,interval = "prediction")
+y_predicted = predictions[1,]
+#y_predicted
+head(predictions)
 ```
 
 
@@ -436,5 +424,13 @@ y_predicted
 #MSE = sum(error^2)
 #MSE
 
+
+```
+
+#################################################################################
+Looking at Random Forest
+```{r}
+
+randomForest(train[,1:7], train[,8])
 
 ```
