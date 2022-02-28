@@ -383,24 +383,25 @@ coef_CI = confint(fit)
 # we see an r^2 or 0.674
 anova(fit)
 
-print(sum((resid)^2))
-print(r_sq)
-print(F_stat)
+#print(sum((resid)^2))
+#print(r_sq)
+#print(F_stat)
 print(coef_CI)
 
-vcov(fit) # Last one is interesting to see, bc using PCA they should be around 0
+#vcov(fit) # Last one is interesting to see, bc using PCA they should be around 0
 ```
 
 ## Predicting Values
 ```{r}
 b0 = fit$coefficients[1]
 b = fit$coefficients[2:8]
-x = test[1,1:7]
-test[1,8]
-test[2,8]
-test[3,8]
-y_pred = b0 + b %*% x
-y_pred
+x = test[,1:7]
+#dim(x)
+
+y_pred = b0 + x %*% b 
+#y_pred
+
+sum((y_pred - test[,8])^2)
 ```
 
 ```{r}
@@ -427,10 +428,20 @@ y_predicted
 
 ```
 
+
 #################################################################################
 Looking at Random Forest
 ```{r}
+library(randomForest)
+fit_rf = randomForest(train[,1:7], train[,8])
 
-randomForest(train[,1:7], train[,8])
+y_pred_rf = predict(fit_rf,test[,1:7])
 
+#y_pred_rf[1]
+#test[1,8]
+### MSE
+MSE_rf = sum((y_pred_rf - test[,8])^2)
+
+diff = (round(y_pred_rf) - test[,8])^2
+length(diff[diff == 0]) # Number of correct classifications
 ```
