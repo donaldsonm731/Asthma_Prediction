@@ -25,6 +25,7 @@ asthmaDataOriginal= read.csv("Asthma_Data_File.csv")
 # Removing first couple of columns because they only identify participant, no useful features. 
 asthmaData = data.frame(asthmaDataOriginal[,-c(1,2,3)])
 head(asthmaData)
+dim(asthmaDataOriginal)
 ```
 ## Data Description
 The first summary doesn't give us to much information because half the inputs are strings. So, before looking at the properties of each feature we need to convert the strings to integers.
@@ -110,6 +111,23 @@ hist(asthmaData$UVIndex, breaks = 25)
 hist(asthmaData$WindSpeed, breaks = 25)
 ```
 
+```{r}
+table(asthmaData$Age) 
+table(asthmaData$Gender)
+table(asthmaData$OutdoorJob)
+table(asthmaData$OutdoorActivities)
+table(asthmaData$SmokingHabit)
+table(asthmaData$Pressure)
+table(asthmaData$UVIndex) 
+
+
+
+```
+
+
+
+
+
 To get a better understanding the distribution of the features a box plot was made. Similar to the histograms it allows us to see if the data is skewed, the mean, median and if any categories can be separated based on a feature. One thing that I am not so sure about is using it on discrete data. I don't feel as though it contributes as much information than say temperature which is more continuous. 
 
 ```{r}
@@ -150,40 +168,159 @@ pairs(asthmaData)
 ## Finding outliers in the categorical/numeric data
 To do this we need to go through all the possibilities from the inputs with categorical data and do a box a whisker with the continuous inputs.
 
-first plotting 1 cat at a time with temp humidity
+before finding the outliers using boxplot (finds points outside 1.5*IQR), we will
+first get a sense of how big each category is, so incase a category is to small,
+we will keep that instance in.
+
 ```{r}
-boxplot(asthmaData$Humidity~asthmaData$Age,data=asthmaData)
-boxplot(asthmaData$Humidity~asthmaData$Gender,data=asthmaData)
-boxplot(asthmaData$Humidity~asthmaData$SmokingHabit,data=asthmaData)
-boxplot(asthmaData$Humidity~asthmaData$OutdoorJob,data=asthmaData)
-boxplot(asthmaData$Humidity~asthmaData$OutdoorActivities,data=asthmaData)
-boxplot(asthmaData$Humidity~asthmaData$Pressure,data=asthmaData)
-boxplot(asthmaData$Humidity~asthmaData$UVIndex,data=asthmaData)
+table(asthmaData$Age) 
+table(asthmaData$Gender)
+table(asthmaData$OutdoorJob)
+table(asthmaData$OutdoorActivities)
+table(asthmaData$SmokingHabit)
+table(asthmaData$Pressure)
+table(asthmaData$UVIndex) 
+
+
 
 ```
+
+Now finding the outliers
+first plotting 1 cat at a time with temp humidity
+
+```{r}
+## NEED TO USE PACKAGE car for this to work because of the upper case B
+
+# This box and whisker plot created the boxplot and also labels the points that are 
+# 1.5 times outside the IQR, I then take those points, convert them from chr to
+# numberic and store it as an outlier. I think take the union of all the outlires
+# to keep track of when looking at other inputs that are continuous.
+
+# Source for this: http://www.unige.ch/ses/sococ/cl/r/bapr.e.html
+
+outlier_ageH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Age,data=asthmaData))
+
+outlier_genderH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Gender,data=asthmaData))
+
+outlier_smH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$SmokingHabit,data=asthmaData))
+
+outlier_ODJH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$OutdoorJob,data=asthmaData))
+
+outlier_ODAH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$OutdoorActivities,data=asthmaData))
+
+outlier_pH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Pressure,data=asthmaData))
+
+outlier_UVH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$UVIndex,data=asthmaData))
+
+# The last part combines all the outlier indices found as a vector and keeps all 
+# number once, so say 114 is stored twice then the unique() will just take one 
+# of them out
+totOutlier_H = unique(c(outlier_ageH, outlier_genderH, outlier_smH, outlier_ODJH, outlier_ODAH,
+                 outlier_pH, outlier_UVH))
+
+
+```
+
+
 Next plotting 1 cat at a time with 
 ```{r}
-boxplot(asthmaData$Temperature~asthmaData$Age,data=asthmaData)
-boxplot(asthmaData$Temperature~asthmaData$Gender,data=asthmaData)
-boxplot(asthmaData$Temperature~asthmaData$SmokingHabit,data=asthmaData)
-boxplot(asthmaData$Temperature~asthmaData$OutdoorJob,data=asthmaData)
-boxplot(asthmaData$Temperature~asthmaData$OutdoorActivities,data=asthmaData)
-boxplot(asthmaData$Temperature~asthmaData$Pressure,data=asthmaData)
-boxplot(asthmaData$Temperature~asthmaData$UVIndex,data=asthmaData)
+## NEED TO USE PACKAGE car for this to work because of the upper case B
 
+# This box and whisker plot created the boxplot and also labels the points that are 
+# 1.5 times outside the IQR, I then take those points, convert them from chr to
+# numberic and store it as an outlier. I think take the union of all the outliers
+# to keep track of when looking at other inputs that are continuous.
+outlier_ageT = as.numeric(Boxplot(asthmaData$Temperature ~asthmaData$Age,data=asthmaData))
+
+outlier_genderT = as.numeric(Boxplot(asthmaData$Temperature ~asthmaData$Gender,data=asthmaData))
+
+outlier_smT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$SmokingHabit,data=asthmaData))
+
+outlier_ODJT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$OutdoorJob,data=asthmaData))
+
+outlier_ODAT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$OutdoorActivities,data=asthmaData))
+
+outlier_pT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$Pressure,data=asthmaData))
+
+outlier_UVT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$UVIndex,data=asthmaData))
+
+# The last part combines all the outlier indices found as a vector and keeps all 
+# number once, so say 114 is stored twice then the unique() will just take one 
+# of them out
+totOutlier_T= unique(c(outlier_ageT, outlier_genderT, outlier_smT, outlier_ODJT, outlier_ODAT,
+                 outlier_pT, outlier_UVT))
+
+totOutlier_T
 ```
 
 lastly, plotting 1 cat at a time with windspeed
 ```{r}
-boxplot(asthmaData$WindSpeed~asthmaData$Age,data=asthmaData)
-boxplot(asthmaData$WindSpeed~asthmaData$Gender,data=asthmaData)
-boxplot(asthmaData$WindSpeed~asthmaData$SmokingHabit,data=asthmaData)
-boxplot(asthmaData$WindSpeed~asthmaData$OutdoorJob,data=asthmaData)
-boxplot(asthmaData$WindSpeed~asthmaData$OutdoorActivities,data=asthmaData)
-boxplot(asthmaData$WindSpeed~asthmaData$Pressure,data=asthmaData)
-boxplot(asthmaData$WindSpeed~asthmaData$UVIndex,data=asthmaData)
+# This box and whisker plot created the boxplot and also labels the points that are 
+# 1.5 times outside the IQR, I then take those points, convert them from chr to
+# numberic and store it as an outlier. I think take the union of all the outliers
+# to keep track of when looking at other inputs that are continuous.
+outlier_ageW = as.numeric(Boxplot(asthmaData$WindSpeed ~asthmaData$Age,data=asthmaData))
+#length(asthmaData$Age[outlier_ageW])/length(asthmaData$Age[asthmaData$Age == 4])
+
+
+
+outlier_genderW = as.numeric(Boxplot(asthmaData$WindSpeed ~asthmaData$Gender,data=asthmaData))
+#length(asthmaData$Gender[outlier_genderW])/length(asthmaData$Gender[asthmaData$Gender == 0])
+
+outlier_smW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$SmokingHabit,data=asthmaData))
+
+outlier_ODJW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$OutdoorJob,data=asthmaData))
+
+outlier_ODAW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$OutdoorActivities,data=asthmaData))
+
+outlier_pW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$Pressure,data=asthmaData))
+
+outlier_UVW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$UVIndex,data=asthmaData))
+
+# The last part combines all the outlier indices found as a vector and keeps all 
+# number once, so say 114 is stored twice then the unique() will just take one 
+# of them out
+totOutlier_W = unique(c(outlier_ageW, outlier_genderW, outlier_smW, outlier_ODJW, outlier_ODAW,
+                 outlier_pW, outlier_UVW))
+
+totOutlier_W
 
 ```
+Looking at the total amount of outliers now:
+```{r}
+totOutliers = unique(c(totOutlier_H, totOutlier_T, totOutlier_W))
+totOutliers
+
+# This ensures that if we run the code again it will not take more
+# Data out, just noticed it was going down when this was not added
+if(dim(asthmaData)[1] == dim(asthmaDataOriginal)[1]){
+  asthmaData_reduced = asthmaData[-c(totOutliers),]
+}
+# Visual help that outliers are only removed once
+dim(asthmaData_reduced)
+length(totOutliers)
+```
+
+
+Visual Check that not to much data was lost in any one category for each input
+```{r}
+
+hist(asthmaData$Age, breaks = 25)
+hist(asthmaData$Gender, breaks = 25)
+hist(asthmaData$OutdoorJob, breaks = 25)
+hist(asthmaData$OutdoorActivities, breaks = 25)
+hist(asthmaData$SmokingHabit, breaks = 25)
+hist(asthmaData$Humidity, breaks = 25)
+hist(asthmaData$Pressure, breaks = 25)
+hist(asthmaData$Temperature, breaks = 25)
+hist(asthmaData$UVIndex, breaks = 25)
+hist(asthmaData$WindSpeed, breaks = 25)
+```
+
+
+
+
+
 ```{r}
 index_smoking = which(asthmaData$SmokingHabit == 0)
 index_gender = which(asthmaData$Gender == 0)
@@ -202,7 +339,9 @@ print(index)
 }
 ```
 
-
+################################################################################\
+## USING CONSTRAST FUNCTION
+# https://stats.oarc.ucla.edu/r/modules/coding-for-categorical-variables-in-regression-models/
 
 
 
@@ -219,7 +358,79 @@ print(index)
 
 ## OUTDated models and ideas
 
+###################################################################
+```{r}
+boxplot(asthmaData$Humidity~asthmaData$Age,data=asthmaData)
+boxplot(asthmaData$Humidity~asthmaData$Gender,data=asthmaData)
+boxplot(asthmaData$Humidity~asthmaData$SmokingHabit,data=asthmaData)
+boxplot(asthmaData$Humidity~asthmaData$OutdoorJob,data=asthmaData)
+boxplot(asthmaData$Humidity~asthmaData$OutdoorActivities,data=asthmaData)
+boxplot(asthmaData$Humidity~asthmaData$Pressure,data=asthmaData)
+boxplot(asthmaData$Humidity~asthmaData$UVIndex,data=asthmaData)
+```
+```{r}
+# Focusing on the boxplots with the cirlces
+# First start with out door job and humidity
 
+index_ODJ2 = which(asthmaData$OutdoorJob == 2)
+q1 = quantile(asthmaData$Humidity[index_ODJ2], 0.25)
+q3 = quantile(asthmaData$Humidity[index_ODJ2], 0.75)
+
+IQR = q3 - q1
+lowerWhisker_ODJ = q1 - 1.5*IQR
+
+index_outliers_ODJ = which(asthmaData$Humidity[index_ODJ2] < lowerWhisker)
+
+index_outliers_ODJ
+```
+
+```{r}
+# Next Age
+index_Age = which(asthmaData$Age == 3)
+q1 = quantile(asthmaData$Humidity[index_Age], 0.25)
+q3 = quantile(asthmaData$Humidity[index_Age], 0.75)
+
+IQR = q3 - q1
+lowerWhisker_Age = q1 - 1.5*IQR
+
+index_outliers_Age = which(asthmaData$Humidity[index_Age] < lowerWhisker_Age)
+
+index_outliers_Age
+
+```
+```{r}
+# Next smoking
+index_SM2 = which(asthmaData$SmokingHabit == 0)
+q1 = quantile(asthmaData$Humidity[index_SM2], 0.25)
+q3 = quantile(asthmaData$Humidity[index_SM2], 0.75)
+
+IQR = q3 - q1
+lowerWhisker_SM = q1 - 1.5*IQR
+
+index_outliers_SM = which(asthmaData$Humidity[index_SM2] < lowerWhisker_SM)
+
+index_outliers_SM
+
+```
+
+```{r}
+# Next pressure
+cat = c(1007, 1010, 1011, 1013)
+index_outliers_p = vector(length = length(cat))
+for (i in 1:length(cat)){
+  index_p = which(asthmaData$Pressure == cat[i])
+  q1 = quantile(asthmaData$Humidity[index_p], 0.25)
+  q3 = quantile(asthmaData$Humidity[index_p], 0.75)
+
+  IQR = q3 - q1
+  lowerWhisker_p = q1 - 1.5*IQR
+
+  index_outliers_p = combine(index_outliers_p,which(asthmaData$Humidity[index_p] < lowerWhisker_p))
+}
+
+index_outliers_p
+
+```
 
 
 ################################################################################
