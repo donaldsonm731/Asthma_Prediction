@@ -190,13 +190,16 @@ index_gender = which(asthmaData$Gender == 0)
 index_age = which(asthmaData$Age == 1)
 index_outDoorAct = which(asthmaData$OutdoorActivities == 1)
 index_outDoorJob = which(asthmaData$OutdoorJob == 1)
-index_UV = which(asthmaData$UVIndex == 0)
-index_pressure = which(asthmaData$Pressure == 1003)
+for (j in min(asthmaData$Pressure):max(asthmaData$Pressure)){ 
+for (i in 0:1){ 
+index_UV = which(asthmaData$UVIndex == i)
+index_pressure = which(asthmaData$Pressure == j)
 
+index = intersect(index_smoking,intersect(index_gender,intersect(index_age, x =   intersect(index_outDoorAct,intersect(index_outDoorJob,intersect(index_UV,index_pressure))))))
+print(index)
 
-index = intersect(index_smoking,intersect(index_gender,intersect(index_age, index_outDoorAct)))
-index
-
+}
+}
 ```
 
 
