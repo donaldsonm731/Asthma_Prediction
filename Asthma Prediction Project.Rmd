@@ -9,13 +9,29 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+TO DO:
+- answer questions below
+- Look at all the different combinations of the categorical data to see if it
+  gives a better understanding of the outliers and which combinations don't have 
+  a lot of data. 
+
+
 Questions to answer: 
 - If using PCA, can we then use univariate outlier detection methods?
-- What are our outliers?
+- What are our outliers? -> we look at the categories againest the cont. data
+                            and boxplot to find outliers outside of 1.5IQR
+                            
 - Can we find the minimum in the bias variance trade off?
 - Other prediction methods to explore: Poly Regression, Random Forest or regular decision trees, SVM... 
-        
 
+      
+Sources:
+ - http://www.unige.ch/ses/sococ/cl/r/bapr.e.html
+ - https://advstats.psychstat.org/book/mregression/catpredictor.php
+ - http://www.sthda.com/english/articles/40-regression-analysis/163-regression-with-categorical-variables-dummy-coding-essentials-in-r/
+ - https://stats.oarc.ucla.edu/r/modules/coding-for-categorical-variables-in-regression-models/
+ 
+ 
 ## Practicum of Data Analytics Project
 ################################################################################
 First part is just importing and data visualization
