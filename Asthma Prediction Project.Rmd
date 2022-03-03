@@ -830,7 +830,7 @@ data.frame( R2 = R2(predictions, testing_dataset $ ACTScore),
 ```{r}
 set.seed(23)
 train_control <- trainControl(method = "LOOCV")
-model <- train(ACTScore ~., data = asthmaData,
+model <- train(ACTScore ~., data = training_dataset,
                method = "lm",
                trControl = train_control)
 print(model)
@@ -841,18 +841,26 @@ print(model)
 set.seed(23)
 train_control <- trainControl(method = "cv",
                               number = 10)
-model <- train(ACTScore ~., data = asthmaData,
+model <- train(ACTScore ~., data = training_dataset,
                method = "lm",
                trControl = train_control)
 print(model)
+#model$finalmodel
 ```
+
+```{r}
+predict(model$finalModel, newdata = data.frame(testing_dataset), interval = "prediction")
+```
+
+
 
 ```{r}
 set.seed(23)
 train_control <- trainControl(method = "repeatedcv",
                             number = 10, repeats = 3)
-model <- train(ACTScore ~., data = asthmaData,
+model <- train(ACTScore ~., data = training_dataset,
                method = "lm",
                trControl = train_control)
 print(model)
+#model$finalmodel
 ```
