@@ -14,15 +14,18 @@ TO DO:
 - Look at all the different combinations of the categorical data to see if it
   gives a better understanding of the outliers and which combinations don't have 
   a lot of data. 
+- look into mixture model
 
 
 Questions to answer: 
-- If using PCA, can we then use univariate outlier detection methods?
+
 - What are our outliers? -> we look at the categories againest the cont. data
                             and boxplot to find outliers outside of 1.5IQR
                             
+- Other prediction methods to explore: Poly Regression, Random Forest or regular decision trees, SVM...
+
+- If using PCA, can we then use univariate outlier detection methods?
 - Can we find the minimum in the bias variance trade off?
-- Other prediction methods to explore: Poly Regression, Random Forest or regular decision trees, SVM... 
 
       
 Sources:
@@ -50,6 +53,7 @@ The first summary doesn't give us to much information because half the inputs ar
 summary(asthmaData)
 
 ```
+
 ```{r}
 # Catagorical Data
 gender = asthmaData$Gender
@@ -69,7 +73,6 @@ wind = asthmaData$WindSpeed
 ACT = asthmaData$ACTScore
 
 ```
-
 
 
 ```{r}
@@ -106,25 +109,6 @@ table(ACT)
 
 
 
-
-
-
-
-Lastly, A correlation matrix and heat map were made to get a sense on how dependent each input was with one another. A couple of the most important observations are that gender and age seem to have a strong negative correlation while others like out door activate and age don't have much correlation. Note the method used shows linear dependence, so the data may share a higher order dependence. 
-
-```{r}
-library(corrplot)
-cor = cor(asthmaData, method = c("pearson", "kendall", "spearman"))
-corrplot(cor, type = "upper", order = "hclust", 
-         tl.col = "black", tl.srt = 45)
-
-heatmap(cor, sym = TRUE)
-```
-
-
-```{r}
-pairs(asthmaData)
-```
 
 #End of visualization of the data
 
@@ -239,6 +223,9 @@ Looking at the total amount of outliers now:
 totOutliers = c(totOutlier_H, totOutlier_T, totOutlier_W)
 #length(totOutliers)
 #table(totOutliers)
+#table(totOutliers) > 1
+#which(table(totOutliers) > 1)
+
 repOutliers = which(table(totOutliers) > 1) #Gives the indices for the the ones that show up more than once. 
 
 # This ensures that if we run the code again it will not take more
@@ -251,7 +238,28 @@ dim(asthmaData_reduced)
 length(repOutliers)
 ```
 
+```{r}
+# Catagorical Data
+gender = asthmaData_reduced$Gender
+age = asthmaData_reduced$Age
+ODJ = asthmaData_reduced$OutdoorJob
+ODA = asthmaData_reduced$OutdoorActivities
+smoking = asthmaData_reduced$SmokingHabit
+pressure = asthmaData_reduced$Pressure
+uv = asthmaData_reduced$UVIndex
 
+# Continuous Data
+temp = asthmaData_reduced$Temperature
+hum = asthmaData_reduced$Humidity
+wind = asthmaData_reduced$WindSpeed
+
+# Y value
+ACT = asthmaData_reduced$ACTScore
+
+
+
+
+```
 Visual Check that not to much data was lost in any one category for each input
 ```{r}
 
@@ -289,13 +297,14 @@ uv = factor(uv)#, c(0,1), labels=c('extreme', 'low'))
 #a.c = contrasts(age.f)
 #contrasts(ODJ.f)
 #contrasts(ODA.f)
-#contrasts(sm.f)
+#contrasts(smoking)
 #contrasts(pressure.f)
 #contrasts(uv.f)
 
 #levels(asthmaData$Gender)
 #levels(asthmaData$Age)
 #levels(asthmaData$UVIndex)
+
 ```
 
 
@@ -371,6 +380,21 @@ asthmaData$UVIndex[asthmaData$UVIndex == 'Extreme'] = 1
 asthmaData$UVIndex[asthmaData$UVIndex == 'Low'] = 0
 
 asthmaData$UVIndex = as.integer(asthmaData$UVIndex)
+```
+Lastly, A correlation matrix and heat map were made to get a sense on how dependent each input was with one another. A couple of the most important observations are that gender and age seem to have a strong negative correlation while others like out door activate and age don't have much correlation. Note the method used shows linear dependence, so the data may share a higher order dependence. 
+
+```{r}
+library(corrplot)
+cor = cor(asthmaData, method = c("pearson", "kendall", "spearman"))
+corrplot(cor, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+
+heatmap(cor, sym = TRUE)
+```
+
+
+```{r}
+pairs(asthmaData)
 ```
 
 Once all the data is converted into integers a summary is then done again to get some information out of the features.
