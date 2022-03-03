@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
+HELLO JFOEWN OEFWO 
 TO DO:
 - answer questions below
 - Look at all the different combinations of the categorical data to see if it
@@ -110,7 +110,7 @@ table(ACT)
 
 which(asthmaData$Pressure == 1003)
 which(asthmaData$Pressure == 1004)
-which(asthmdaData$ACT == 16)
+which(asthmaData$ACT == 16)
 
 ```
 
@@ -307,6 +307,7 @@ uv = factor(uv)#, c(0,1), labels=c('extreme', 'low'))
 #levels(asthmaData$UVIndex)
 
 ```
+
 
 
 ```{r}
