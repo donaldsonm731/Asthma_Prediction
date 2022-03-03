@@ -7,8 +7,11 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(caret)
+library(car)
 ```
-HELLO JFOEWN OEFWO 
+
 TO DO:
 - answer questions below
 - Look at all the different combinations of the categorical data to see if it
@@ -804,4 +807,52 @@ MSE_rf = sum((y_pred_rf - test[,8])^2)
 
 diff = (round(y_pred_rf) - test[,8])^2
 length(diff[diff == 0]) # Number of correct classifications
+```
+
+#######################################################
+Cross-Valdidation
+
+```{r}
+set.seed(23)
+random_sample <- createDataPartition(asthmaData$ACTScore,
+                                p = 0.7, list = FALSE)
+
+training_dataset  <- asthmaData[random_sample, ]
+testing_dataset <- asthmaData[-random_sample, ]
+model <- lm(ACTScore ~., data = training_dataset)
+predictions <- predict(model, testing_dataset)
+
+data.frame( R2 = R2(predictions, testing_dataset $ ACTScore),
+            RMSE = RMSE(predictions, testing_dataset $ ACTScore),
+            MAE = MAE(predictions, testing_dataset $ ACTScore))
+```
+
+```{r}
+set.seed(23)
+train_control <- trainControl(method = "LOOCV")
+model <- train(ACTScore ~., data = asthmaData,
+               method = "lm",
+               trControl = train_control)
+print(model)
+```
+
+
+```{r}
+set.seed(23)
+train_control <- trainControl(method = "cv",
+                              number = 10)
+model <- train(ACTScore ~., data = asthmaData,
+               method = "lm",
+               trControl = train_control)
+print(model)
+```
+
+```{r}
+set.seed(23)
+train_control <- trainControl(method = "repeatedcv",
+                            number = 10, repeats = 3)
+model <- train(ACTScore ~., data = asthmaData,
+               method = "lm",
+               trControl = train_control)
+print(model)
 ```
