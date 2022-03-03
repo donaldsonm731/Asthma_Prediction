@@ -106,12 +106,13 @@ table(pressure)
 table(uv)
 table(ACT)
 ```
+```{r}
 
+which(asthmaData$Pressure == 1003)
+which(asthmaData$Pressure == 1004)
+which(asthmdaData$ACT == 16)
 
-
-
-#End of visualization of the data
-
+```
 
 #################################################################################
 ## Finding outliers in the categorical/numeric data
