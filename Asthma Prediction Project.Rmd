@@ -287,14 +287,14 @@ Visual Check that not to much data was lost in any one category for each input
 ```{r}
 # helpful reference
 # https://advstats.psychstat.org/book/mregression/catpredictor.php
-gender = factor(gender)#,c(0,1), labels=c('male', 'female'))
+#gender = factor(gender)#,c(0,1), labels=c('male', 'female'))
 
-age = factor(age)#,c(0,1,2,3), labels=c('19-30', '31-40','41-50', 'above 50'))
-ODJ = factor(ODJ)#,c(0,1,2), labels=c('frequently', 'occationally', 'rarely'))
-ODA = factor(ODA)#,c(0,1,2), labels=c('extremly Likely', 'neither', 'not likely'))
-smoking = factor(smoking)#,c(0,1), labels=c('no', 'yes'))
-pressure = factor(pressure)#,c(0,1,2,3,4,5,6,7,8,9,10,11), labels=c('1003', '1004', '1005', '1006', '1007', '1008', '1009', '1010', '1011', '1012','1013','1014'))
-uv = factor(uv)#, c(0,1), labels=c('extreme', 'low'))
+#age = factor(age)#,c(0,1,2,3), labels=c('19-30', '31-40','41-50', 'above 50'))
+##ODJ = factor(ODJ)#,c(0,1,2), labels=c('frequently', 'occationally', 'rarely'))
+#ODA = factor(ODA)#,c(0,1,2), labels=c('extremly Likely', 'neither', 'not likely'))
+#smoking = factor(smoking)#,c(0,1), labels=c('no', 'yes'))
+#pressure = factor(pressure)#,c(0,1,2,3,4,5,6,7,8,9,10,11), labels=c('1003', '1004', '1005', '1006', '1007', '1008', '1009', '1010', '1011', '1012','1013','1014'))
+#uv = factor(uv)#, c(0,1), labels=c('extreme', 'low'))
 
 # Contrasts converts to number for each level
 #contrasts(asthmaData$Gender)
@@ -309,6 +309,11 @@ uv = factor(uv)#, c(0,1), labels=c('extreme', 'low'))
 #levels(asthmaData$Age)
 #levels(asthmaData$UVIndex)
 
+
+names = names(asthmaData[,c(-6,-8,-9,-11)])
+asthmaData[,names] = lapply(asthmaData[,names], factor)
+
+str(asthmaData)
 ```
 
 
@@ -327,7 +332,36 @@ summary(lm(ACT ~ hum + wind + gender + age + ODJ + ODA + smoking  + uv))
 
 
 
+###############################################################################
+## Splitting the data set into training and testing
+```{r}
+set.seed(3)
+index = createDataPartition(asthmaData$ACTScore, p = .75, list = FALSE)
 
+train = asthmaData[index,]
+test = asthmaData[-index,]
+
+```
+
+## Training on Linear Regression Model
+```{r}
+# no parameter tuning
+set.seed(5)
+fit = lm(ACTScore ~ ., data = asthmaData)
+
+summary(fit)
+
+
+## ADD THE EXHAUSTIVE SEARCH #######
+
+#ols_step_all_possible(fit)
+
+# Below Functions can be used when parameter tuning is needed
+#fitControl = trainControl(method = 'repeatedcv',number  = 5, repeats = 10)
+#fit = train(ACTScore ~ ., data = train, method = 'lm', trControl = fitControl)
+
+
+```
 
 
 
