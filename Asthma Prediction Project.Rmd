@@ -14,20 +14,16 @@ library(olsrr)
 ```
 
 TO DO:
-- answer questions below
 - Look at all the different combinations of the categorical data to see if it
   gives a better understanding of the outliers and which combinations don't have 
   a lot of data. 
 - look into mixture model
-
+- Other prediction methods to explore: Poly Regression, Random Forest or regular decision trees, SVM...
 
 Questions to answer: 
 
 - What are our outliers? -> we look at the categories againest the cont. data
                             and boxplot to find outliers outside of 1.5IQR
-                            
-- Other prediction methods to explore: Poly Regression, Random Forest or regular decision trees, SVM...
-
 - If using PCA, can we then use univariate outlier detection methods?
 - Can we find the minimum in the bias variance trade off?
 
@@ -346,7 +342,7 @@ test = asthmaData[-index,]
 ```{r}
 # no parameter tuning
 set.seed(5)
-fit = lm(ACTScore ~ ., data = asthmaData)
+fit = lm(ACTScore ~ ., data = train)
 
 summary(fit)
 ```
@@ -354,7 +350,7 @@ summary(fit)
 
 #Exhaustive Search
 ```{r}
-#a <- ols_step_best_subset(fit)
+a <- ols_step_best_subset(fit)
 #b <- ols_step_all_possible(fit)
 
 a
@@ -368,17 +364,12 @@ plot(a)
 
 
 ```{r}
-#fit.lm <- lm(ACT ~ temp + hum + wind + gender + age + ODJ + ODA + smoking + pressure + uv)
-#c <- ols_step_best_subset(fit.lm)
+fit.lm <- lm(ACT ~ temp + hum + wind + gender + age + ODJ + ODA + smoking + pressure + uv)
+c <- ols_step_best_subset(fit.lm)
 #d <- ols_step_all_possible(fit.lm)
 
 c
 plot(c)
-```
-
-```{r}
-bestmodel <- lm(ACT ~ hum + wind + age + ODA + pressure + uv)
-plot(bestmodel)
 ```
 
 
