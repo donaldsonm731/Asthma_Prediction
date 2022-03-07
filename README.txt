@@ -16,3 +16,8 @@ IMPORTANT STEPS TO TAKE WHEN EDITING THIS PROJECT:
 		- git add . (for all files) or git add filename (for one file)  
 		- git commit -m'put_message_here'
                 - git push
+
+
+Questions:
+ - machine learning workflow as Machine Learning Morphism (MLM)
+ - outlier detection method
