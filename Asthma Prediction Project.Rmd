@@ -13,6 +13,22 @@ library(car)
 library(olsrr)
 ```
 
+lmer: reaction ~ days + (days|subject)
+
+panel data
+
+inter subject variablity
+
+generlaized linear model
+ - randomness within the variance of the error term
+
+lme4 package
+glmer generalized mixed linear models
+
+make a decision on whether to have data from each participant or hold out on 2 participants
+
+make sure to answer why we did what we did
+
 TO DO:
 - Look at all the different combinations of the categorical data to see if it
   gives a better understanding of the outliers and which combinations don't have 
@@ -26,7 +42,6 @@ Questions to answer:
                             and boxplot to find outliers outside of 1.5IQR
 - If using PCA, can we then use univariate outlier detection methods?
 - Can we find the minimum in the bias variance trade off?
-
       
 Sources:
  - http://www.unige.ch/ses/sococ/cl/r/bapr.e.html
@@ -314,13 +329,13 @@ uv = factor(uv)#, c(0,1), labels=c('extreme', 'low'))
 
 
 ```{r}
-summary(lm(ACT ~ temp + hum + wind + gender + age + ODJ + ODA + smoking + pressure + uv))
+summary(lm(ACT ~ temp + hum + wind + gender + age + ODJ + ODA + smoking + pressure + uv), data = train)
 ```
 
 noticing which values are insignificant, we are now looking at the variables that 
 only had significance. We are only taking out Pressure and Temp, bc don't know how to take away part of an input, or if that is even a valid procedure.
 ```{r}
-summary(lm(ACT ~ hum + wind + gender + age + ODJ + ODA + smoking  + uv))
+summary(lm(ACT ~ hum + wind + gender + age + ODJ + ODA + smoking  + uv, data = train))
 
 ```
 
