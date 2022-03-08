@@ -365,8 +365,8 @@ ACT = asthmaData$ACTScore
 
 ```{r}
 ## To Do: below is just a example, need to re-do.
-fm1 <- lmer ( ACT ~ pressure +  ( smoking | subject ), data = train )
-summary(fm1)
+#fm1 <- lmer ( ACT ~ pressure +  ( smoking | subject ), data = train )
+#summary(fm1)
 
 # Conditional means of the random effects
 #fm1 <- lmer ( ACT ~ pressure + hum + wind + gender + age + ODJ + ODA + smoking + uv + temp + wind + (1|subject), data = train )
