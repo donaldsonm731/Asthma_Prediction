@@ -11,6 +11,7 @@ library(tidyverse)
 library(caret)
 library(car)
 library(olsrr)
+library(lme4)
 ```
 
 lmer: reaction ~ days + (days|subject)
@@ -279,9 +280,10 @@ dim(subj9)
 dim(subj10)
 
 ```
-## ACtScore vs Temp by subject
-```{r}
 
+
+## ACTScore vs Temp by subject
+```{r}
 plot(subj1$Temperature,subj1$ACTScore)
 plot(subj2$Temperature,subj2$ACTScore)
 plot(subj3$Temperature,subj3$ACTScore)
@@ -292,13 +294,11 @@ plot(subj7$Temperature,subj7$ACTScore)
 plot(subj8$Temperature,subj8$ACTScore)
 plot(subj9$Temperature,subj9$ACTScore)
 plot(subj10$Temperature,subj10$ACTScore)
-
-
-
 ```
-## ACTscore vs humidity by subject
-```{r}
 
+
+## ACTScore vs humidity by subject
+```{r}
 plot(subj1$Humidity,subj1$ACTScore)
 plot(subj2$Humidity,subj2$ACTScore)
 plot(subj3$Humidity,subj3$ACTScore)
@@ -309,14 +309,10 @@ plot(subj7$Humidity,subj7$ACTScore)
 plot(subj8$Humidity,subj8$ACTScore)
 plot(subj9$Humidity,subj9$ACTScore)
 plot(subj10$Humidity,subj10$ACTScore)
-
-
-
 ```
 
-## ACT score vs windspeed by subject 
+## ACTScore vs windspeed by subject 
 ```{r}
-
 plot(subj1$WindSpeed,subj1$ACTScore)
 plot(subj2$WindSpeed,subj2$ACTScore)
 plot(subj3$WindSpeed,subj3$ACTScore)
@@ -327,9 +323,6 @@ plot(subj7$WindSpeed,subj7$ACTScore)
 plot(subj8$WindSpeed,subj8$ACTScore)
 plot(subj9$WindSpeed,subj9$ACTScore)
 plot(subj10$WindSpeed,subj10$ACTScore)
-
-
-
 ```
 
 ##############################################################################
@@ -372,9 +365,14 @@ ACT = asthmaData$ACTScore
 
 ```{r}
 ## To Do: below is just a example, need to re-do.
-fm1 <- lmer ( ACT ~ pressure +  ( smoking | subject ), data = asthmaData )
+fm1 <- lmer ( ACT ~ pressure +  ( smoking | subject ), data = train )
 summary(fm1)
 
+# Conditional means of the random effects
+#fm1 <- lmer ( ACT ~ pressure + hum + wind + gender + age + ODJ + ODA + smoking + uv + temp + wind + (1|subject), data = train )
+#summary(fm1)
+#rr2 <- ranef(fm1)
+#rr2$subject
 ```
 
 
