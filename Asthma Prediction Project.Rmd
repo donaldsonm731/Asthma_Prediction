@@ -17,7 +17,7 @@ lmer: reaction ~ days + (days|subject)
 
 panel data
 
-inter subject variablity
+inter subject variability
 
 generlaized linear model
  - randomness within the variance of the error term
@@ -25,29 +25,39 @@ generlaized linear model
 lme4 package
 glmer generalized mixed linear models
 
-make a decision on whether to have data from each participant or hold out on 2 participants
+
 
 make sure to answer why we did what we did
 
 TO DO:
-- Look at all the different combinations of the categorical data to see if it
-  gives a better understanding of the outliers and which combinations don't have 
-  a lot of data. 
-- look into mixture model
-- Other prediction methods to explore: Poly Regression, Random Forest or regular decision trees, SVM...
+  
+- look into mixture model*** (lmer: reaction ~ days + (days|subject))
+
+- Read panel data, (mixture model source)
+
+- make a decision on whether to have data from each participant or hold out on 2 participants
+
 
 Questions to answer: 
 
-- What are our outliers? -> we look at the categories againest the cont. data
-                            and boxplot to find outliers outside of 1.5IQR
-- If using PCA, can we then use univariate outlier detection methods?
-- Can we find the minimum in the bias variance trade off?
-      
+- What are our outliers? -> we looked at the categories against the cont. inputs                                               in a boxplot to find outliers outside of 1.5IQR. Then 
+                            took any index that showed up more than once. 
+                            
+- We dont scale/ standardize the factored data do we?
+
+Packages Used: 
+- lme4
+- caret
+- car
+- any others?
+
 Sources:
- - http://www.unige.ch/ses/sococ/cl/r/bapr.e.html
- - https://advstats.psychstat.org/book/mregression/catpredictor.php
- - http://www.sthda.com/english/articles/40-regression-analysis/163-regression-with-categorical-variables-dummy-coding-essentials-in-r/
- - https://stats.oarc.ucla.edu/r/modules/coding-for-categorical-variables-in-regression-models/
+- Mixture model: https://lme4.r-forge.r-project.org/slides/2011-03-16-Amsterdam/2Longitudinal.pdf
+- Catet Package: https://topepo.github.io/caret/feature-selection-overview.html
+- Vraible selection: https://cran.r-project.org/web/packages/olsrr/vignettes/variable_selection.html
+- Boxplots: http://www.unige.ch/ses/sococ/cl/r/bapr.e.html
+- Regressing Cat. data: https://advstats.psychstat.org/book/mregression/catpredictor.php
+- Coding Cat. Data: https://stats.oarc.ucla.edu/r/modules/coding-for-categorical-variables-in-regression-models/
  
  
 ## Practicum of Data Analytics Project
@@ -56,19 +66,340 @@ First part is just importing and data visualization
 ```{r}
 # Importing the data set and printing the first 6 rows to see what it looks like
 asthmaDataOriginal= read.csv("Asthma_Data_File.csv")
-# Removing first couple of columns because they only identify participant, no useful features. 
-asthmaData = data.frame(asthmaDataOriginal[,-c(1,2,3)])
+# Removing id number for each subject
+asthmaData = data.frame(asthmaDataOriginal[,-2])
 head(asthmaData)
 dim(asthmaDataOriginal)
 ```
 ## Data Description
-The first summary doesn't give us to much information because half the inputs are strings. So, before looking at the properties of each feature we need to convert the strings to integers.
+The first summary doesn't give us to much information because half the inputs are chr. So, before looking at the properties of each feature we need to convert the strings to integers.
 ```{r}
 # Summary gives a description for each input and output, giving you a sense of what the data looks like
 summary(asthmaData)
+dim(asthmaData)
+```
+Removing the subject number and all the non categorical data. Then factoring each input.
+Now there are levels for each categorical input...
+```{r}
+names = names(asthmaData[,c(-1,-8,-10,-12,-13)])
+asthmaData[,names] = lapply(asthmaData[,names], factor)
+
+str(asthmaData)
+
+
+```
+Bar plots and histograms give us an idea of the data in each category. 
+,,, Exapand on observations...
+```{r}
+barplot(prop.table(table(asthmaData$Age)), main = 'Age')
+barplot(prop.table(table(asthmaData$Gender)), main = 'Gender')
+barplot(prop.table(table(asthmaData$OutdoorJob)), main = 'Out Door Job')
+barplot(prop.table(table(asthmaData$OutdoorActivities)), main = 'Out Door Activities')
+barplot(prop.table(table(asthmaData$SmokingHabit)), main = 'Smoking Habit')
+barplot(prop.table(table(asthmaData$Pressure)), main = 'Pressure')
+barplot(prop.table(table(asthmaData$UVIndex)), main = 'UV Index')
+
+hist(asthmaData$Humidity, breaks = 25, main = 'Humidity')
+
+hist(asthmaData$Temperature, breaks = 25, main = 'temp')
+
+hist(asthmaData$WindSpeed, breaks = 25, main = 'wind')
+hist(asthmaData$ACTScore,breaks = 25, main = 'ACT score')
+```
+Same here...
+```{r}
+table(asthmaData$Age) 
+table(asthmaData$Gender)
+table(asthmaData$OutdoorJob)
+table(asthmaData$OutdoorActivities)
+table(asthmaData$SmokingHabit)
+table(asthmaData$Pressure)
+table(asthmaData$UVIndex)
+table(asthmaData$ACTScore)
+```
+
+#################################################################################
+## Finding outliers in the categorical/numeric data
+To find outliers, we will have a box plot of each input that is categorical and put it against the inputs that are continuous.
+
+Finding the outliers using Boxplot (finds points outside 1.5*IQR), as well as to get a better understanding the distribution of the features a box plot was made. 
+
+
+first plotting 1 categorical input at a time with temp humidity
+
+```{r}
+## NEED TO USE PACKAGE car for this to work because of the upper case B
+
+# This box and whisker plot created the boxplot and also labels the points that are 
+# 1.5 times outside the IQR, I then take those points, convert them from chr to
+# numberic and store it as an outlier. I think take the union of all the outlires
+# to keep track of when looking at other inputs that are continuous.
+
+# Source for this: http://www.unige.ch/ses/sococ/cl/r/bapr.e.html
+
+outlier_ageH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Age,data=asthmaData))
+
+outlier_genderH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Gender,data=asthmaData))
+
+outlier_smH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$SmokingHabit,data=asthmaData))
+
+outlier_ODJH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$OutdoorJob,data=asthmaData))
+
+outlier_ODAH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$OutdoorActivities,data=asthmaData))
+
+outlier_pH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Pressure,data=asthmaData))
+
+outlier_UVH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$UVIndex,data=asthmaData))
+
+# The last part combines all the outlier indices found as a vector and keeps all 
+# number once, so say 114 is stored twice then the unique() will just take one 
+# of them out
+totOutlier_H = c(outlier_ageH, outlier_genderH, outlier_smH, outlier_ODJH, outlier_ODAH,outlier_pH, outlier_UVH)
+
+table(totOutlier_H)
+```
+Next plotting 1 cat. at a time with 
+```{r}
+## NEED TO USE PACKAGE car for this to work because of the upper case B
+
+# This box and whisker plot created the boxplot and also labels the points that are 
+# 1.5 times outside the IQR, I then take those points, convert them from chr to
+# numberic and store it as an outlier. I think take the union of all the outliers
+# to keep track of when looking at other inputs that are continuous.
+outlier_ageT = as.numeric(Boxplot(asthmaData$Temperature ~asthmaData$Age,data=asthmaData))
+
+outlier_genderT = as.numeric(Boxplot(asthmaData$Temperature ~asthmaData$Gender,data=asthmaData))
+
+outlier_smT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$SmokingHabit,data=asthmaData))
+
+outlier_ODJT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$OutdoorJob,data=asthmaData))
+
+outlier_ODAT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$OutdoorActivities,data=asthmaData))
+
+outlier_pT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$Pressure,data=asthmaData))
+
+outlier_UVT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$UVIndex,data=asthmaData))
+
+# The last part combines all the outlier indices found as a vector and keeps all 
+# number once, so say 114 is stored twice then the unique() will just take one 
+# of them out
+totOutlier_T= c(outlier_ageT, outlier_genderT, outlier_smT, outlier_ODJT, outlier_ODAT,outlier_pT, outlier_UVT)
+
+table(totOutlier_T)
+```
+
+lastly, plotting 1 cat at a time with windspeed
+```{r}
+# This box and whisker plot created the boxplot and also labels the points that are 
+# 1.5 times outside the IQR, I then take those points, convert them from chr to
+# numberic and store it as an outlier. I think take the union of all the outliers
+# to keep track of when looking at other inputs that are continuous.
+outlier_ageW = as.numeric(Boxplot(asthmaData$WindSpeed ~asthmaData$Age,data=asthmaData))
+#length(asthmaData$Age[outlier_ageW])/length(asthmaData$Age[asthmaData$Age == 4])
+
+
+
+outlier_genderW = as.numeric(Boxplot(asthmaData$WindSpeed ~asthmaData$Gender,data=asthmaData))
+#length(asthmaData$Gender[outlier_genderW])/length(asthmaData$Gender[asthmaData$Gender == 0])
+
+outlier_smW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$SmokingHabit,data=asthmaData))
+
+outlier_ODJW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$OutdoorJob,data=asthmaData))
+
+outlier_ODAW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$OutdoorActivities,data=asthmaData))
+
+outlier_pW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$Pressure,data=asthmaData))
+
+outlier_UVW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$UVIndex,data=asthmaData))
+
+# The last part combines all the outlier indices found as a vector and keeps all 
+# number once, so say 114 is stored twice then the unique() will just take one 
+# of them out
+totOutlier_W = c(outlier_ageW, outlier_genderW, outlier_smW, outlier_ODJW, outlier_ODAW,outlier_pW, outlier_UVW)
+
+table(totOutlier_W)
 
 ```
 
+Looking at the total amount of outliers now:
+```{r}
+totOutliers = c(totOutlier_H, totOutlier_T, totOutlier_W)
+#length(totOutliers)
+#table(totOutliers)
+#table(totOutliers) > 1
+#which(table(totOutliers) > 1)
+
+repOutliers = which(table(totOutliers) > 1) #Gives the indices for the the ones that show up more than once. 
+
+# This ensures that if we run the code again it will not take more
+# Data out, just noticed it was going down when this was not added
+#if(dim(asthmaData)[1] == dim(asthmaDataOriginal)[1]){
+  #asthmaData= asthmaData[-c(repOutliers),]
+#}
+# Visual help that outliers are only removed once
+dim(asthmaData)
+length(repOutliers)
+length(unique(totOutliers))
+```
+
+#############################################################################
+## Standardize Data set
+```{r}
+## Do we need to scale all inputs or just the non-factroized ones??
+#asthmaData$Humidity = scale(asthmaData$Humidity, scale = TRUE)
+#asthmaData = predict.preProcess(asthmaData,method = c("center", "scale"))
+```
+
+
+
+###############################################################################
+## By Subject plots
+```{r}
+subj1 = asthmaData[asthmaData$UserNo. == 1,]
+subj2 = asthmaData[asthmaData$UserNo. == 2,]
+subj3 = asthmaData[asthmaData$UserNo. == 3,]
+subj4 = asthmaData[asthmaData$UserNo. == 4,]
+subj5 = asthmaData[asthmaData$UserNo. == 5,]
+subj6 = asthmaData[asthmaData$UserNo. == 6,]
+subj7 = asthmaData[asthmaData$UserNo. == 7,]
+subj8 = asthmaData[asthmaData$UserNo. == 8,]
+subj9 = asthmaData[asthmaData$UserNo. == 9,]
+subj10 = asthmaData[asthmaData$UserNo. == 10,]
+
+
+dim(subj1)
+dim(subj2)
+dim(subj3)
+dim(subj4)
+dim(subj5)
+dim(subj6)
+dim(subj7)
+dim(subj8)
+dim(subj9)
+dim(subj10)
+
+```
+## ACtScore vs Temp by subject
+```{r}
+
+plot(subj1$Temperature,subj1$ACTScore)
+plot(subj2$Temperature,subj2$ACTScore)
+plot(subj3$Temperature,subj3$ACTScore)
+plot(subj4$Temperature,subj4$ACTScore)
+plot(subj5$Temperature,subj5$ACTScore)
+plot(subj6$Temperature,subj6$ACTScore)
+plot(subj7$Temperature,subj7$ACTScore)
+plot(subj8$Temperature,subj8$ACTScore)
+plot(subj9$Temperature,subj9$ACTScore)
+plot(subj10$Temperature,subj10$ACTScore)
+
+
+
+```
+## ACTscore vs humidity by subject
+```{r}
+
+plot(subj1$Humidity,subj1$ACTScore)
+plot(subj2$Humidity,subj2$ACTScore)
+plot(subj3$Humidity,subj3$ACTScore)
+plot(subj4$Humidity,subj4$ACTScore)
+plot(subj5$Humidity,subj5$ACTScore)
+plot(subj6$Humidity,subj6$ACTScore)
+plot(subj7$Humidity,subj7$ACTScore)
+plot(subj8$Humidity,subj8$ACTScore)
+plot(subj9$Humidity,subj9$ACTScore)
+plot(subj10$Humidity,subj10$ACTScore)
+
+
+
+```
+
+## ACT score vs windspeed by subject 
+```{r}
+
+plot(subj1$WindSpeed,subj1$ACTScore)
+plot(subj2$WindSpeed,subj2$ACTScore)
+plot(subj3$WindSpeed,subj3$ACTScore)
+plot(subj4$WindSpeed,subj4$ACTScore)
+plot(subj5$WindSpeed,subj5$ACTScore)
+plot(subj6$WindSpeed,subj6$ACTScore)
+plot(subj7$WindSpeed,subj7$ACTScore)
+plot(subj8$WindSpeed,subj8$ACTScore)
+plot(subj9$WindSpeed,subj9$ACTScore)
+plot(subj10$WindSpeed,subj10$ACTScore)
+
+
+
+```
+
+##############################################################################
+## Training and Test Set
+```{r}
+set.seed(3)
+index = createDataPartition(asthmaData$ACTScore, p = .75, list = FALSE)
+
+train = asthmaData[index,]
+test = asthmaData[-index,]
+
+## USE below if we think we need to keep some subjects out
+#folds <- groupKFold(asthmaData$UserNo., k = 6)
+#folds
+```
+
+
+################################################################################
+## Mixture Model
+```{r}
+# Catagorical Data
+subject = asthmaData$UserNo.
+gender = asthmaData$Gender
+age = asthmaData$Age
+ODJ = asthmaData$OutdoorJob
+ODA = asthmaData$OutdoorActivities
+smoking = asthmaData$SmokingHabit
+pressure = asthmaData$Pressure
+uv = asthmaData$UVIndex
+
+# Continous Data
+temp = asthmaData$Temperature
+hum = asthmaData$Humidity
+wind = asthmaData$WindSpeed
+
+# Y value
+ACT = asthmaData$ACTScore
+
+```
+
+```{r}
+## To Do: below is just a example, need to re-do.
+fm1 <- lmer ( ACT ~ pressure +  ( smoking | subject ), data = asthmaData )
+summary(fm1)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
 ```{r}
 # Catagorical Data
 gender = asthmaData$Gender
