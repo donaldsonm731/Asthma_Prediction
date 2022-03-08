@@ -328,6 +328,7 @@ plot(subj10$WindSpeed,subj10$ACTScore)
 ##############################################################################
 ## Training and Test Set
 ```{r}
+# Train with leaving 3 people out
 set.seed(3)
 index = createDataPartition(asthmaData$ACTScore, p = .75, list = FALSE)
 
@@ -344,40 +345,58 @@ test = asthmaData[-index,]
 ## Mixture Model
 ```{r}
 # Catagorical Data
-subject = asthmaData$UserNo.
-gender = asthmaData$Gender
-age = asthmaData$Age
-ODJ = asthmaData$OutdoorJob
-ODA = asthmaData$OutdoorActivities
-smoking = asthmaData$SmokingHabit
-pressure = asthmaData$Pressure
-uv = asthmaData$UVIndex
+subject = train$UserNo.
+loc = train$Location
+gender = train$Gender
+age = train$Age
+ODJ = train$OutdoorJob
+ODA = train$OutdoorActivities
+smoking = train$SmokingHabit
+pressure = train$Pressure
+uv = train$UVIndex
 
 # Continous Data
-temp = asthmaData$Temperature
-hum = asthmaData$Humidity
-wind = asthmaData$WindSpeed
+temp = train$Temperature
+hum = train$Humidity
+wind = train$WindSpeed
 
 # Y value
-ACT = asthmaData$ACTScore
+ACT = train$ACTScore
 
 ```
 
+The first model uses as many inputs as it can without getting a singular error and a random effect from the subjects. Model 2, same as 1 but now random effect is location. Model 3 also R.E. is location but with less varaibles.
+
+The anova table below shows use which model is most significant.
 ```{r}
 ## To Do: below is just a example, need to re-do.
 #fm1 <- lmer ( ACT ~ pressure +  ( smoking | subject ), data = train )
 #summary(fm1)
+## Baisc structure of lmer()
+##  lmer(repsonce variable ~ fixed values (i.e. the different input features) + random effects(i.e. patients and/or location and/or gender ???))
 
 # Conditional means of the random effects
-#fm1 <- lmer ( ACT ~ pressure + hum + wind + gender + age + ODJ + ODA + smoking + uv + temp + wind + (1|subject), data = train )
-#summary(fm1)
+model1 = lmer(ACT ~ gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|subject), data = train )
+
+model2 = lmer(ACT ~ gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = train )
+
+model3 = lmer(ACT ~  ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = train )
+
+anova(model1,model2, model3)
+#summary(model1)
+#summary(model2)
 #rr2 <- ranef(fm1)
 #rr2$subject
 ```
 
 
 
+```{r}
 
+# Covar matrix of all the fixed effects
+#vcov(fm1)
+
+```
 
 
 
