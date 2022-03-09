@@ -82,7 +82,9 @@ dim(asthmaData)
 Removing the subject number and all the non categorical data. Then factoring each input.
 Now there are levels for each categorical input...
 ```{r}
-names = names(asthmaData[,c(-1,-8,-10,-12,-13)])
+# Only want  to factor the categories so removing the columns listed below.
+# These are: subject, temp, humidity, windspeed and ACTScore.
+names = names(asthmaData[,c(-1,-8,-10,-12,-13)]) 
 asthmaData[,names] = lapply(asthmaData[,names], factor)
 
 str(asthmaData)
@@ -365,7 +367,7 @@ ACT = train$ACTScore
 
 ```
 
-The first model uses as many inputs as it can without getting a singular error and a random effect from the subjects. Model 2, same as 1 but now random effect is location. Model 3 also R.E. is location but with less varaibles.
+The first model uses as many inputs as it can without getting a singular error and a random effect from the subjects. Model 2, same as 1 but now random effect is location. Model 3 also R.E. is location but with less variables.
 
 The anova table below shows use which model is most significant.
 ```{r}
