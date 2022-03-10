@@ -63,7 +63,7 @@ Sources:
  
 ## Practicum of Data Analytics Project
 ################################################################################
-First part is just importing and data visualization
+##importing and data visualization
 ```{r}
 # Importing the data set and printing the first 6 rows to see what it looks like
 asthmaDataOriginal= read.csv("Asthma_Data_File.csv")
@@ -80,7 +80,7 @@ summary(asthmaData)
 dim(asthmaData)
 ```
 Removing the subject number and all the non categorical data. Then factoring each input.
-Now there are levels for each categorical input...
+Now there are levels for each categorical input.
 ```{r}
 # Only want  to factor the categories so removing the columns listed below.
 # These are: subject, temp, humidity, windspeed and ACTScore.
@@ -236,9 +236,9 @@ repOutliers = which(table(totOutliers) > 1) #Gives the indices for the the ones 
 
 # This ensures that if we run the code again it will not take more
 # Data out, just noticed it was going down when this was not added
-#if(dim(asthmaData)[1] == dim(asthmaDataOriginal)[1]){
-  #asthmaData= asthmaData[-c(repOutliers),]
-#}
+if(dim(asthmaData)[1] == dim(asthmaDataOriginal)[1]){
+  asthmaData= asthmaData[-c(repOutliers),]
+}
 # Visual help that outliers are only removed once
 dim(asthmaData)
 length(repOutliers)
@@ -249,8 +249,11 @@ length(unique(totOutliers))
 ## Standardize Data set
 ```{r}
 ## Do we need to scale all inputs or just the non-factroized ones??
-#asthmaData$Humidity = scale(asthmaData$Humidity, scale = TRUE)
-#asthmaData = predict.preProcess(asthmaData,method = c("center", "scale"))
+#asthmaData = as.numeric(asthmaData[,-13])
+asthmaData$Humidity = rescale(asthmaData$Humidity, scale = TRUE)
+asthmaData$Temperature = rescale(asthmaData$Temperature, scale = TRUE)
+asthmaData$WindSpeed = rescale(asthmaData$WindSpeed, scale = TRUE)
+
 ```
 
 
@@ -332,20 +335,25 @@ plot(subj10$WindSpeed,subj10$ACTScore)
 ```{r}
 # Train with leaving 3 people out
 set.seed(3)
-index = createDataPartition(asthmaData$ACTScore, p = .75, list = FALSE)
 
-train = asthmaData[index,]
-test = asthmaData[-index,]
+#index = createDataPartition(asthmaData, p = .75, list = FALSE)
 
-## USE below if we think we need to keep some subjects out
-#folds <- groupKFold(asthmaData$UserNo., k = 6)
-#folds
+#train = asthmaData[index,]
+#test = asthmaData[-index,]
+
+# This groups the data into k-folds, leaving out some of the patients
+# to ensure more robust model.
+subject = asthmaData$UserNo.
+folds <- groupKFold(subject, k = 7) 
+
+
+
 ```
-
 
 ################################################################################
 ## Mixture Model
 ```{r}
+train = asthmaData[folds$Fold1,]
 # Catagorical Data
 subject = train$UserNo.
 loc = train$Location
@@ -380,12 +388,12 @@ The anova table below shows use which model is most significant.
 # Conditional means of the random effects
 model1 = lmer(ACT ~ gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|subject), data = train )
 
-model2 = lmer(ACT ~ gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = train )
+#model2 = lmer(ACT ~ gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = asthmaData_train )
 
-model3 = lmer(ACT ~  ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = train )
+#model3 = lmer(ACT ~  ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = train )
 
-anova(model1,model2, model3)
-#summary(model1)
+#anova(model1,model2, model3)
+summary(model1)
 #summary(model2)
 #rr2 <- ranef(fm1)
 #rr2$subject
@@ -395,8 +403,12 @@ anova(model1,model2, model3)
 
 ```{r}
 
-# Covar matrix of all the fixed effects
-#vcov(fm1)
+set.seed(23)
+train_control <- trainControl(method = "LOOCV")
+model <- train(ACTScore ~., data = training_dataset,
+               method = "lm",
+               trControl = train_control)
+print(model)
 
 ```
 
@@ -736,6 +748,12 @@ c <- ols_step_best_subset(fit.lm)
 c
 plot(c)
 ```
+
+
+
+
+
+
 
 
 
