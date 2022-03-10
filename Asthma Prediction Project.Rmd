@@ -140,7 +140,7 @@ first plotting 1 categorical input at a time with temp humidity
 
 # Source for this: http://www.unige.ch/ses/sococ/cl/r/bapr.e.html
 
-outlier_ageH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Age,data=asthmaData))
+outlier_ageH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Age,data=asthmaData, xlab = 'Age Category', ylab = 'Humidity (%)'))
 
 outlier_genderH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Gender,data=asthmaData))
 
@@ -245,6 +245,28 @@ length(repOutliers)
 length(unique(totOutliers))
 ```
 
+Check to see all inputs and categories are still represented
+```{r}
+# Age group aboce 50 lost 23 instances, not sig. for the group
+# Males also lost 23 instances
+# ODJ: Occationally lost 23 instances
+# Extremely likely : lost 23 instances
+# No smoking lost 23 instances
+# Pressure 1007 lost 6 instances, 1008 lost 4,  1009 lost 2, 1010 lost 5
+#            1011 lost 4, 1012 and 1013 lost 1 each (totalign 23 instances)
+#UVindex: extreme lost 2 and the low lost 21.
+
+## All in all, no group was lost or severly minimized during this process
+table(asthmaData$Age) 
+table(asthmaData$Gender)
+table(asthmaData$OutdoorJob)
+table(asthmaData$OutdoorActivities)
+table(asthmaData$SmokingHabit)
+table(asthmaData$Pressure)
+table(asthmaData$UVIndex)
+table(asthmaData$ACTScore)
+
+```
 #############################################################################
 ## Standardize Data set
 ```{r}
@@ -272,17 +294,18 @@ subj8 = asthmaData[asthmaData$UserNo. == 8,]
 subj9 = asthmaData[asthmaData$UserNo. == 9,]
 subj10 = asthmaData[asthmaData$UserNo. == 10,]
 
+sprintf('Number of Instances per Subject')
+sprintf('Subject 1: %f',dim(subj1)[1])
+sprintf('Subject 2: %f',dim(subj2)[1])
+sprintf('Subject 3: %f',dim(subj3)[1])
+sprintf('Subject 4: %f',dim(subj4)[1])
+sprintf('Subject 5: %f',dim(subj5)[1])
+sprintf('Subject 6: %f',dim(subj6)[1])
+sprintf('Subject 7: %f',dim(subj7)[1])
+sprintf('Subject 8: %f',dim(subj8)[1])
+sprintf('Subject 9: %f',dim(subj9)[1])
+sprintf('Subject 10: %f',dim(subj10)[1])
 
-dim(subj1)
-dim(subj2)
-dim(subj3)
-dim(subj4)
-dim(subj5)
-dim(subj6)
-dim(subj7)
-dim(subj8)
-dim(subj9)
-dim(subj10)
 
 ```
 
@@ -388,12 +411,18 @@ The anova table below shows use which model is most significant.
 # Conditional means of the random effects
 model1 = lmer(ACT ~ gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|subject), data = train )
 
+model2 = lmer(ACT ~ (1|subject), data = train )
+
+model3 = lmer(ACT ~ hum + (hum|subject), data = train )
+
 #model2 = lmer(ACT ~ gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = asthmaData_train )
 
 #model3 = lmer(ACT ~  ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = train )
 
-#anova(model1,model2, model3)
+anova(model1,model2, model3)
 summary(model1)
+summary(model2)
+summary(model3)
 #summary(model2)
 #rr2 <- ranef(fm1)
 #rr2$subject
