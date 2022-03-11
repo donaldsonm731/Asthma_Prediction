@@ -270,11 +270,10 @@ table(asthmaData$ACTScore)
 #############################################################################
 ## Standardize Data set
 ```{r}
-## Do we need to scale all inputs or just the non-factroized ones??
-#asthmaData = as.numeric(asthmaData[,-13])
-asthmaData$Humidity = rescale(asthmaData$Humidity, scale = TRUE)
-asthmaData$Temperature = rescale(asthmaData$Temperature, scale = TRUE)
-asthmaData$WindSpeed = rescale(asthmaData$WindSpeed, scale = TRUE)
+## standard normalize of continuous variable for mixture model.
+asthmaData$Humidity = scale(asthmaData$Humidity, scale = TRUE)
+asthmaData$Temperature = scale(asthmaData$Temperature, scale = TRUE)
+asthmaData$WindSpeed = scale(asthmaData$WindSpeed, scale = TRUE)
 
 ```
 
@@ -403,26 +402,23 @@ The first model uses as many inputs as it can without getting a singular error a
 The anova table below shows use which model is most significant.
 ```{r}
 ## To Do: below is just a example, need to re-do.
-#fm1 <- lmer ( ACT ~ pressure +  ( smoking | subject ), data = train )
-#summary(fm1)
-## Baisc structure of lmer()
-##  lmer(repsonce variable ~ fixed values (i.e. the different input features) + random effects(i.e. patients and/or location and/or gender ???))
+
 
 # Conditional means of the random effects
-model1 = lmer(ACT ~ gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|subject), data = train )
+model1 = lmer(ACT ~ wind + gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|subject) , data = train )
 
 model2 = lmer(ACT ~ (1|subject), data = train )
 
-model3 = lmer(ACT ~ hum + (hum|subject), data = train )
+model3 = lmer(ACT ~ hum + (hum|subject), data = train)
 
 #model2 = lmer(ACT ~ gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = asthmaData_train )
 
 #model3 = lmer(ACT ~  ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = train )
 
-anova(model1,model2, model3)
+#anova(model1,model2, model3)
 summary(model1)
-summary(model2)
-summary(model3)
+#summary(model2)
+#summary(model3)
 #summary(model2)
 #rr2 <- ranef(fm1)
 #rr2$subject
