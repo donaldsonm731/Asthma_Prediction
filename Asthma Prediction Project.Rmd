@@ -89,7 +89,7 @@ asthmaData[,names] = lapply(asthmaData[,names], factor)
 
 str(asthmaData)
 
-
+contrasts(asthmaData$Location)
 ```
 
 ```{r}
@@ -803,6 +803,13 @@ plot(c)
 #asthmaData$SmokingHabit
 
 ###################################################################
+## Location
+asthmaData$Location[asthmaData$Location == 'Petaling'] = as.numeric(0)
+asthmaData$Location[asthmaData$Location == 'Kampong Baharu Balakong'] = as.numeric(1)
+asthmaData$Location[asthmaData$Location == 'Putrajaya'] = as.numeric(2)
+asthmaData$Location[asthmaData$Location == 'Kota Bharu'] = as.numeric(3)
+asthmaData$Location[asthmaData$Location == 'Kuala Lampur'] = as.numeric(4)
+asthmaData$Location[asthmaData$Location == 'Cyberjaya'] = as.numeric(5)
 
 ## Changing age
 asthmaData$Age[asthmaData$Age == 'Above 50'] = 4 
@@ -843,6 +850,12 @@ asthmaData$UVIndex[asthmaData$UVIndex == 'Extreme'] = 1
 asthmaData$UVIndex[asthmaData$UVIndex == 'Low'] = 0
 
 asthmaData$UVIndex = as.integer(asthmaData$UVIndex)
+```
+
+```{r}
+asthmaData$Location = as.numeric(asthmaData$Location)
+summary(asthmaData$Location)
+
 ```
 Lastly, A correlation matrix and heat map were made to get a sense on how dependent each input was with one another. A couple of the most important observations are that gender and age seem to have a strong negative correlation while others like out door activate and age don't have much correlation. Note the method used shows linear dependence, so the data may share a higher order dependence. 
 
