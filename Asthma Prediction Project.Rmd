@@ -91,6 +91,14 @@ str(asthmaData)
 
 
 ```
+
+```{r}
+head(asthmaData$OutdoorJob)
+
+
+
+```
+
 Bar plots and histograms give us an idea of the data in each category. 
 ,,, Exapand on observations...
 ```{r}
