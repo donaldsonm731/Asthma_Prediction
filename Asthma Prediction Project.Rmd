@@ -12,8 +12,10 @@ library(caret)
 library(car)
 library(olsrr)
 library(lme4)
+library(shiny)
 ```
 
+## install.packages("shiny")
 
 --> how each subject rates their asthma
 --> look at the type of factoring (maybe 0,1,2)
