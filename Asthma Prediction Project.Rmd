@@ -13,6 +13,13 @@ library(car)
 library(olsrr)
 library(lme4)
 library(shiny)
+library(cvms)
+library(groupdata2)
+
+#install.packages(c("boot", "car", "caret", "tidyverse",  "effects", "foreign", 
+                   #"Hmisc", "DT", "knitr", "lme4", "MASS", "mlogit", "msm", 
+                   #"QuantPsyc", "reshape2", "rms", "sandwich", "sfsmisc", "sjPlot", 
+                   #"vcd", "visreg", "MuMIn", "lmerTest"))
 ```
 
 ## install.packages("shiny")
@@ -39,7 +46,9 @@ make sure to answer why we did what we did
 
 TO DO:
   
-- look into mixture model*** (lmer: reaction ~ days + (days|subject))
+- In lmerTest package function to use: step.lmerNodLmerTest() -> backward elimination of Rand/fixed effects
+
+- Also ANOVA() tests rand effects and drop1() tests fixed effects (f-test).
 
 - Read panel data, (mixture model source)
 
@@ -91,7 +100,7 @@ Now there are levels for each categorical input.
 ```{r}
 # Only want  to factor the categories so removing the columns listed below.
 # These are: subject, temp, humidity, windspeed and ACTScore.
-names = names(asthmaData[,c(-1,-8,-10,-12,-13)]) 
+names = names(asthmaData[,c(-8,-10,-12,-13)]) 
 asthmaData[,names] = lapply(asthmaData[,names], factor)
 
 str(asthmaData)
@@ -282,6 +291,8 @@ table(asthmaData$UVIndex)
 table(asthmaData$ACTScore)
 
 ```
+
+
 #############################################################################
 ## Standardize Data set
 ```{r}
@@ -366,6 +377,60 @@ plot(subj8$WindSpeed,subj8$ACTScore)
 plot(subj9$WindSpeed,subj9$ACTScore)
 plot(subj10$WindSpeed,subj10$ACTScore)
 ```
+
+```{r}
+
+dataFold = fold(data = asthmaData, k = 3, id_col = 'UserNo.') %>% 
+                 arrange(.folds)
+
+formula = c("asthmaData$ACTScore~ asthmaData$Temperature + asthmaData$Humidity + (1 | asthmaData$UserNo.)")
+cv = cross_validate(data = dataFold, formulas = formula, fold_cols = '.folds', family = 'gaussian', REML = TRUE)
+
+
+```
+
+
+
+
+
+
+```{r}
+set.seed(244224)
+splits = group_vfold_cv(asthmaData, group = 'UserNo.', v = 10)
+
+
+caret_splits = rsample2caret(splits)
+
+names(caret_splits)
+
+#head(caret_splits)
+```
+
+
+```{r}
+
+tc_grouped = trainControl(method = 'cv', number = 10, savePredictions = TRUE, 
+                          index = caret_splits$index, indexOut = caret_splits$indexOut)
+
+all_x = asthmaData %>%
+        select(-UserNo., -ACTScore) %>%
+        as.data.frame()
+
+all_y = asthmaData %>%
+        pull(ACTScore)
+
+m_grouped = train(x = all_x, y = all_y, method = 'glm', 
+       
+
+
+
+
+```
+
+
+
+
+
 
 ##############################################################################
 ## Training and Test Set
