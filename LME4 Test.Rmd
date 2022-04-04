@@ -16,42 +16,7 @@ library(car)
 library(olsrr)
 library(lme4)
 library(shiny)
-library(cvms)
-library(groupdata2)
 
-
-```
-
-```{r}
-# Importing the data set and printing the first 6 rows to see what it looks like
-asthmaDataOriginal= read.csv("Asthma_Data_File.csv") %>%
-   rename(subj = UserNo.,
-          loc = Location,
-          age = Age,
-          gender = Gender,
-          odj = OutdoorJob,
-          oda = OutdoorActivities,
-          sh = SmokingHabit,
-          hum = Humidity,
-          pres = Pressure,
-          temp = Temperature,
-          uv = UVIndex,
-          ws = WindSpeed,
-          score = ACTScore) %>%
-  
-  mutate(subj = factor(subj, levels = c(0:9), labels = c("1","2","3","4","5","6","7","8","9","10")),
-        loc = factor(loc, levels = c(0:5), labels = c("Petaling","Kampong Baharu         Balakong","Putrajaya","Kota Bharu","Kuala Lampur","Cyberjaya")),
-        age = factor(age, levels = c(0:3), labels = c("Above 50","41-50","31-40","19-30")),
-        gender = factor(gender, levels = c(0,1), labels = c("Male","Female")),
-        odj = factor(odj, levels = c(0,1,2), labels = c("Frequently","Occasionally","Rarely")),
-        oda = factor(oda, levels = c(0,1,2), labels = c("Extremely likely","Neither likely or dislikely","Not at all likely")),
-        sh = factor(sh, levels = c(0,1), labels = c("Yes", "No")),
-        uv = factor(uv, levels = c(0,1), labels = c("Extreme", "Low")))
-
-
-```
-
-```{r}
 
 
 library(cvms)
@@ -59,18 +24,51 @@ library(groupdata2)   # fold() partition()
 library(knitr)        # kable()
 library(dplyr)        # %>% arrange()
 library(ggplot2)
-
-
 ```
 
 ```{r}
+# Importing the data set and printing the first 6 rows to see what it looks like
+asthmaDataOriginal = read.csv("Asthma_Data_File.csv") %>%
+   rename(subj = UserNo.,
+          loc = Location,
+          age = Age,
+          gender = Gender,
+          odj = OutdoorJob,
+          oda = OutdoorActivities,          
+          sh = SmokingHabit,
+          hum = Humidity,
+          pres = Pressure,
+          temp = Temperature,
+          uv = UVIndex,
+          ws = WindSpeed,
+          score = ACTScore)
+  
+#  mutate(subj = factor(subj, levels = c(0:9), labels = c("1","2","3","4","5","6","7","8","9","10")),
+#        loc = factor(loc, levels = c(0:5), labels = c("Petaling","Kampong Baharu         Balakong","Putrajaya","Kota Bharu","Kuala Lampur","Cyberjaya")),
+#        age = factor(age, levels = c(0:3), labels = c("Above 50","41-50","31-40","19-30")),
+#        gender = factor(gender, levels = c(0,1), labels = c("Male","Female")),
+#        odj = factor(odj, levels = c(0,1,2), labels = c("Frequently","Occasionally","Rarely")),
+#        oda = factor(oda, levels = c(0,1,2), labels = c("Extremely likely","Neither likely or dislikely","Not at all likely")),
+#        sh = factor(sh, levels = c(0,1), labels = c("Yes", "No")),
+#        uv = factor(uv, levels = c(0,1), labels = c("Extreme", "Low")))
+
+
+head(asthmaDataOriginal)
+```
+
+Factoring
+```{r}
+asthmaData = asthmaDataOriginal
+
+names = names(asthmaData[,c(1:8,10,12)]) 
+asthmaData[,names] = lapply(asthmaData[,names], factor)
 
 str(asthmaData)
 
 
 ```
 ```{r}
-asthmaData = asthmaDataOriginal
+
 set.seed(7)
 
 # Fold data 
@@ -83,8 +81,15 @@ asthmaData %>% head(15) %>% kable()
 
 
 ```{r}
+
+### Note: for some reason age is a problem in this
 mixed_model_formulas <- c("score ~ temp",
-                          "score ~ temp + (1|subj)")
+                          "score ~ temp + (1|subj)",
+                          "score ~ temp + (1|subj) + (1|loc)",
+                          "score ~ temp + hum + (1|subj) + (1|loc)",
+                          "score ~ temp + hum  + gender + (1|subj) + (1|loc)",
+                          "score ~ temp + hum  + uv + (1|subj) + (1|loc)",
+                          "score ~ temp + hum  + uv + ws + (1|subj) + (1|loc)")
 
 
 CV <- cross_validate(data = asthmaData,
@@ -96,9 +101,13 @@ CV <- cross_validate(data = asthmaData,
 CV
 ```
 
+```{r}
+par(mfrow=c(1,2)) 
+plot(CV$RMSE)
+plot(CV$AIC)
 
-
-
+CV$Results
+```
 
 
 ```{r}
