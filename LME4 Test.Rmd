@@ -1,0 +1,165 @@
+---
+title: "LME4 Test"
+author: "Matthew Donaldson"
+date: '2022-04-03'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(caret)
+library(car)
+library(olsrr)
+library(lme4)
+library(shiny)
+library(cvms)
+library(groupdata2)
+
+
+```
+
+```{r}
+# Importing the data set and printing the first 6 rows to see what it looks like
+asthmaDataOriginal= read.csv("Asthma_Data_File.csv") %>%
+   rename(subj = UserNo.,
+          loc = Location,
+          age = Age,
+          gender = Gender,
+          odj = OutdoorJob,
+          oda = OutdoorActivities,
+          sh = SmokingHabit,
+          hum = Humidity,
+          pres = Pressure,
+          temp = Temperature,
+          uv = UVIndex,
+          ws = WindSpeed,
+          score = ACTScore) %>%
+  
+  mutate(subj = factor(subj, levels = c(0:9), labels = c("1","2","3","4","5","6","7","8","9","10")),
+        loc = factor(loc, levels = c(0:5), labels = c("Petaling","Kampong Baharu         Balakong","Putrajaya","Kota Bharu","Kuala Lampur","Cyberjaya")),
+        age = factor(age, levels = c(0:3), labels = c("Above 50","41-50","31-40","19-30")),
+        gender = factor(gender, levels = c(0,1), labels = c("Male","Female")),
+        odj = factor(odj, levels = c(0,1,2), labels = c("Frequently","Occasionally","Rarely")),
+        oda = factor(oda, levels = c(0,1,2), labels = c("Extremely likely","Neither likely or dislikely","Not at all likely")),
+        sh = factor(sh, levels = c(0,1), labels = c("Yes", "No")),
+        uv = factor(uv, levels = c(0,1), labels = c("Extreme", "Low")))
+
+
+```
+
+```{r}
+
+
+library(cvms)
+library(groupdata2)   # fold() partition()
+library(knitr)        # kable()
+library(dplyr)        # %>% arrange()
+library(ggplot2)
+
+
+```
+
+```{r}
+
+str(asthmaData)
+
+
+```
+```{r}
+asthmaData = asthmaDataOriginal
+set.seed(7)
+
+# Fold data 
+asthmaData = fold(data = asthmaData, k = 4,
+            id_col = 'subj') %>% 
+            arrange(.folds)
+
+asthmaData %>% head(15) %>% kable()
+```
+
+
+```{r}
+mixed_model_formulas <- c("score ~ temp",
+                          "score ~ temp + (1|subj)")
+
+
+CV <- cross_validate(data = asthmaData,
+  formulas = mixed_model_formulas,
+  fold_cols = '.folds',
+  family = 'gaussian',
+  REML = FALSE)
+
+CV
+```
+
+
+
+
+
+
+```{r}
+
+data <- participant.scores
+
+
+# Set seed for reproducibility
+set.seed(7)
+
+# Fold data 
+data <- fold(
+  data = data, k = 4,
+  cat_col = 'diagnosis',
+  id_col = 'participant') %>% 
+  arrange(.folds)
+
+# Show first 15 rows of data
+data %>% head(15) %>% kable()
+
+```
+
+
+
+Code Below is an example used to help with writing it for ours.
+Link :https://cran.r-project.org/web/packages/cvms/readme/README.html#cross-validate-mixed-effects-models
+```{r}
+
+mixed_model_formulas <- c("score ~ diagnosis + (1|session)",
+                          "score ~ age + (1|session)")
+
+CV4 <- cross_validate(
+  data = data,
+  formulas = mixed_model_formulas,
+  fold_cols = '.folds',
+  family = 'gaussian',
+  REML = FALSE
+)
+
+CV4
+```
+
+
+
+
+
+```{r}
+
+m0.glm  = glm(ACTScore ~ 1, family = gaussian, data = lmmdata)
+m0.lmer = lmer(ACTScore ~ 1 + (1|subject), data = lmmdata)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
