@@ -454,19 +454,19 @@ ACT = train$ACTScore
 ```{r}
 model1 <- lmer(ACT ~  , data = train)
 
-step_res <- step(model1)
-final <- get_model(step_res)
-anova(final)
-step_res
+step_res1 <- step(model1)
+final1 <- get_model(step_res1)
+anova(final1)
+step_res1
 ```
 
 ```{r}
 model2 <- lmer(ACT ~  (1|subject), data = train)
 
-step_res <- step(model2)
-final1 <- get_model(step_res)
-anova(final1)
-step_res
+step_res2 <- step(model2)
+final2 <- get_model(step_res2)
+anova(final2)
+step_res2
 ```
 
 
