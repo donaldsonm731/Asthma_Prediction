@@ -15,6 +15,7 @@ library(lme4)
 library(shiny)
 library(cvms)
 library(groupdata2)
+library(lmerTest)
 
 #install.packages(c("boot", "car", "caret", "tidyverse",  "effects", "foreign", 
                    #"Hmisc", "DT", "knitr", "lme4", "MASS", "mlogit", "msm", 
@@ -30,19 +31,11 @@ library(groupdata2)
 
 lmer: reaction ~ days + (days|subject)
 
-panel data
-
-inter subject variability
-
 generlaized linear model
  - randomness within the variance of the error term
 
 lme4 package
 glmer generalized mixed linear models
-
-
-
-make sure to answer why we did what we did
 
 TO DO:
   
@@ -53,20 +46,6 @@ TO DO:
 - Read panel data, (mixture model source)
 
 - make a decision on whether to have data from each participant or hold out on 2 participants
-
-
-Questions to answer: 
-
-- What are our outliers? -> we looked at the categories against the cont. inputs                                               in a boxplot to find outliers outside of 1.5IQR. Then 
-                            took any index that showed up more than once. 
-                            
-- We dont scale/ standardize the factored data do we?
-
-Packages Used: 
-- lme4
-- caret
-- car
-- any others?
 
 Sources:
 - Mixture model: https://lme4.r-forge.r-project.org/slides/2011-03-16-Amsterdam/2Longitudinal.pdf
@@ -88,6 +67,7 @@ asthmaData = data.frame(asthmaDataOriginal[,-2])
 head(asthmaData)
 dim(asthmaDataOriginal)
 ```
+
 ## Data Description
 The first summary doesn't give us to much information because half the inputs are chr. So, before looking at the properties of each feature we need to convert the strings to integers.
 ```{r}
@@ -95,6 +75,7 @@ The first summary doesn't give us to much information because half the inputs ar
 summary(asthmaData)
 dim(asthmaData)
 ```
+
 Removing the subject number and all the non categorical data. Then factoring each input.
 Now there are levels for each categorical input.
 ```{r}
@@ -110,13 +91,9 @@ contrasts(asthmaData$Location)
 
 ```{r}
 head(asthmaData$OutdoorJob)
-
-
-
 ```
 
 Bar plots and histograms give us an idea of the data in each category. 
-,,, Exapand on observations...
 ```{r}
 barplot(prop.table(table(asthmaData$Age)), main = 'Age')
 barplot(prop.table(table(asthmaData$Gender)), main = 'Gender')
@@ -133,7 +110,8 @@ hist(asthmaData$Temperature, breaks = 25, main = 'temp')
 hist(asthmaData$WindSpeed, breaks = 25, main = 'wind')
 hist(asthmaData$ACTScore,breaks = 25, main = 'ACT score')
 ```
-Same here...
+
+
 ```{r}
 table(asthmaData$Age) 
 table(asthmaData$Gender)
@@ -147,12 +125,9 @@ table(asthmaData$ACTScore)
 
 #################################################################################
 ## Finding outliers in the categorical/numeric data
-To find outliers, we will have a box plot of each input that is categorical and put it against the inputs that are continuous.
+To find outliers, we will have a box plot of each input that is categorical and put it against the inputs that are continuous.Finding the outliers using Boxplot (finds points outside 1.5*IQR), as well as to get a better understanding the distribution of the features a box plot was made. 
 
-Finding the outliers using Boxplot (finds points outside 1.5*IQR), as well as to get a better understanding the distribution of the features a box plot was made. 
-
-
-first plotting 1 categorical input at a time with temp humidity
+First plotting 1 categorical input at a time with temp humidity
 
 ```{r}
 ## NEED TO USE PACKAGE car for this to work because of the upper case B
@@ -185,6 +160,7 @@ totOutlier_H = c(outlier_ageH, outlier_genderH, outlier_smH, outlier_ODJH, outli
 
 table(totOutlier_H)
 ```
+
 Next plotting 1 cat. at a time with 
 ```{r}
 ## NEED TO USE PACKAGE car for this to work because of the upper case B
@@ -223,8 +199,6 @@ lastly, plotting 1 cat at a time with windspeed
 # to keep track of when looking at other inputs that are continuous.
 outlier_ageW = as.numeric(Boxplot(asthmaData$WindSpeed ~asthmaData$Age,data=asthmaData))
 #length(asthmaData$Age[outlier_ageW])/length(asthmaData$Age[asthmaData$Age == 4])
-
-
 
 outlier_genderW = as.numeric(Boxplot(asthmaData$WindSpeed ~asthmaData$Gender,data=asthmaData))
 #length(asthmaData$Gender[outlier_genderW])/length(asthmaData$Gender[asthmaData$Gender == 0])
@@ -297,10 +271,9 @@ table(asthmaData$ACTScore)
 ## Standardize Data set
 ```{r}
 ## standard normalize of continuous variable for mixture model.
-asthmaData$Humidity = scale(asthmaData$Humidity, scale = TRUE)
-asthmaData$Temperature = scale(asthmaData$Temperature, scale = TRUE)
-asthmaData$WindSpeed = scale(asthmaData$WindSpeed, scale = TRUE)
-
+#asthmaData$Humidity = scale(asthmaData$Humidity, scale = TRUE)
+#asthmaData$Temperature = scale(asthmaData$Temperature, scale = TRUE)
+#asthmaData$WindSpeed = scale(asthmaData$WindSpeed, scale = TRUE)
 ```
 
 
@@ -380,11 +353,11 @@ plot(subj10$WindSpeed,subj10$ACTScore)
 
 ```{r}
 
-dataFold = fold(data = asthmaData, k = 3, id_col = 'UserNo.') %>% 
+#dataFold = fold(data = asthmaData, k = 3, id_col = 'UserNo.') %>% 
                  arrange(.folds)
 
-formula = c("asthmaData$ACTScore~ asthmaData$Temperature + asthmaData$Humidity + (1 | asthmaData$UserNo.)")
-cv = cross_validate(data = dataFold, formulas = formula, fold_cols = '.folds', family = 'gaussian', REML = TRUE)
+#formula = c("asthmaData$ACTScore~ asthmaData$Temperature + asthmaData$Humidity + (1 | asthmaData$UserNo.)")
+#cv = cross_validate(data = dataFold, formulas = formula, fold_cols = '.folds', family = 'gaussian', REML = TRUE)
 
 
 ```
@@ -395,13 +368,13 @@ cv = cross_validate(data = dataFold, formulas = formula, fold_cols = '.folds', f
 
 
 ```{r}
-set.seed(244224)
-splits = group_vfold_cv(asthmaData, group = 'UserNo.', v = 10)
+#set.seed(244224)
+#splits = group_vfold_cv(asthmaData, group = 'UserNo.', v = 10)
 
 
-caret_splits = rsample2caret(splits)
+#caret_splits = rsample2caret(splits)
 
-names(caret_splits)
+#names(caret_splits)
 
 #head(caret_splits)
 ```
@@ -409,17 +382,17 @@ names(caret_splits)
 
 ```{r}
 
-tc_grouped = trainControl(method = 'cv', number = 10, savePredictions = TRUE, 
+#tc_grouped = trainControl(method = 'cv', number = 10, savePredictions = TRUE, 
                           index = caret_splits$index, indexOut = caret_splits$indexOut)
 
-all_x = asthmaData %>%
+#all_x = asthmaData %>%
         select(-UserNo., -ACTScore) %>%
         as.data.frame()
 
-all_y = asthmaData %>%
+#all_y = asthmaData %>%
         pull(ACTScore)
 
-m_grouped = train(x = all_x, y = all_y, method = 'glm', 
+#m_grouped = train(x = all_x, y = all_y, method = 'glm', 
        
 
 
@@ -447,9 +420,6 @@ set.seed(3)
 # to ensure more robust model.
 subject = asthmaData$UserNo.
 folds <- groupKFold(subject, k = 7) 
-
-
-
 ```
 
 ################################################################################
@@ -477,6 +447,31 @@ ACT = train$ACTScore
 
 ```
 
+
+### Backward feature selection
+
+
+```{r}
+model1 <- lmer(ACT ~ wind + gender + age + ODJ + ODA + smoking +  pressure  + temp + hum + uv +  (1|loc) + (1|subject) , data = train)
+
+step_res <- step(model1)
+final <- get_model(step_res)
+anova(final)
+step_res
+```
+
+```{r}
+model2 <- lmer(ACT ~ wind + gender + age + ODJ +  pressure + hum + uv + (1|subject) , data = train)
+
+step_res <- step(model2)
+final <- get_model(step_res)
+anova(final)
+step_res
+```
+
+
+
+### Intial lmer Models
 The first model uses as many inputs as it can without getting a singular error and a random effect from the subjects. Model 2, same as 1 but now random effect is location. Model 3 also R.E. is location but with less variables.
 
 The anova table below shows use which model is most significant.
@@ -485,7 +480,7 @@ The anova table below shows use which model is most significant.
 
 
 # Conditional means of the random effects
-model1 = lmer(ACT ~ wind + gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|subject) , data = train )
+model1 = lmer(ACT ~ wind + gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|subject) , data = train)
 
 model2 = lmer(ACT ~ (1|subject), data = train )
 
@@ -588,12 +583,11 @@ table(pressure)
 table(uv)
 table(ACT)
 ```
-```{r}
 
+```{r}
 which(asthmaData$Pressure == 1003)
 which(asthmaData$Pressure == 1004)
 which(asthmaData$ACT == 16)
-
 ```
 
 #################################################################################

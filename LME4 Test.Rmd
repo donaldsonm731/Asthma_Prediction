@@ -16,9 +16,6 @@ library(car)
 library(olsrr)
 library(lme4)
 library(shiny)
-
-
-
 library(cvms)
 library(groupdata2)   # fold() partition()
 library(knitr)        # kable()
@@ -52,7 +49,6 @@ asthmaDataOriginal = read.csv("Asthma_Data_File.csv") %>%
 #        sh = factor(sh, levels = c(0,1), labels = c("Yes", "No")),
 #        uv = factor(uv, levels = c(0,1), labels = c("Extreme", "Low")))
 
-
 head(asthmaDataOriginal)
 ```
 
@@ -64,11 +60,9 @@ names = names(asthmaData[,c(1:8,10,12)])
 asthmaData[,names] = lapply(asthmaData[,names], factor)
 
 str(asthmaData)
-
-
 ```
-```{r}
 
+```{r}
 set.seed(7)
 
 # Fold data 
@@ -81,7 +75,6 @@ asthmaData %>% head(15) %>% kable()
 
 
 ```{r}
-
 ### Note: for some reason age is a problem in this
 mixed_model_formulas <- c("score ~ temp",
                           "score ~ temp + (1|subj)",
@@ -111,7 +104,6 @@ CV$Results
 
 
 ```{r}
-
 data <- participant.scores
 
 
