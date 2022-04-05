@@ -63,6 +63,14 @@ str(asthmaData)
 ```
 
 ```{r}
+
+asthmaData$age = factor(asthmaData$age, levels = c(0:3), labels = c("Above 50","41-50","31-40","19-30"))
+
+```
+
+
+
+```{r}
 set.seed(7)
 
 # Fold data 
@@ -73,16 +81,47 @@ asthmaData = fold(data = asthmaData, k = 4,
 asthmaData %>% head(15) %>% kable()
 ```
 
+```{r}
+
+modelCombs = combine_predictors(
+  dependent = "score",
+  fixed_effects = c("temp","hum","gender","pres","uv"),
+  random_effects = "(1|subj)"
+)
+
+
+index = list()
+head(modelCombs)
+
+#for (i in 1:length(modelCombs)){
+#  if (grepl("*", modelCombs[i])){
+     
+#     index = append(index,i)
+    
+#  }
+#}
+  
+index
+```
+
+```{r}
+
+asthmaData$age = factor(asthmaData$age)
+
+
+```
 
 ```{r}
 ### Note: for some reason age is a problem in this
-mixed_model_formulas <- c("score ~ temp",
-                          "score ~ temp + (1|subj)",
-                          "score ~ temp + (1|subj) + (1|loc)",
+mixed_model_formulas <- c("score ~ 1",
+                          "score ~ (1|subj)",
+                          "score ~ (1|loc)",
                           "score ~ temp + hum + (1|subj) + (1|loc)",
                           "score ~ temp + hum  + gender + (1|subj) + (1|loc)",
                           "score ~ temp + hum  + uv + (1|subj) + (1|loc)",
-                          "score ~ temp + hum  + uv + ws + (1|subj) + (1|loc)")
+                          "score ~ temp + hum  + uv + ws + (1|subj) + (1|loc)",
+                          "score ~ temp + hum  + uv + ws + gender + (1|subj) + (1|loc)",
+                          "score ~ temp + hum  + uv + ws + gender + odj + (1|subj) + (1|loc)")
 
 
 CV <- cross_validate(data = asthmaData,
@@ -91,37 +130,77 @@ CV <- cross_validate(data = asthmaData,
   family = 'gaussian',
   REML = FALSE)
 
-CV
-```
-
-```{r}
-par(mfrow=c(1,2)) 
+par(mfrow=c(1,2))
 plot(CV$RMSE)
 plot(CV$AIC)
+```
 
-CV$Results
+
+
+```{r}
+
+library("lattice")
+library("merTools")
+
+bestModel = lmer(score ~ temp + hum  + uv + ws + gender + (1|subj) + (1|loc), data = asthmaData)
+
+
+#summary(bestModel)
+#dotplot(ranef(bestModel, condVar = TRUE))
+
+preds = predictInterval(bestModel, n.sims = 500, level = 0.9, stat = 'median')
+
+
+```
+
+```{r}
+library(influence.ME) # To get cooks distance
+#par(mfrow=c(1,2))
+
+plot(fitted(bestModel),residuals(bestModel))
+#lines(lowess(fitted(bestModel), residuals(bestModel), col=2)
+
+qqnorm(residuals(bestModel))
+qqline(residuals(bestModel))
+
+# Attempt at Cook's Distance, Crashed computer
+#infl <- influence(bestModel, obs = TRUE)
+#cooks.distance(infl)
+#plot(infl, which = "cook")
+
+# Prediction interval per subject
+#preds[which(asthmaData$subj == 1),1]
+#preds[which(asthmaData$subj == 2),]
+#preds[which(asthmaData$subj == 3),]
+#preds[which(asthmaData$subj == 4),]
+#preds[which(asthmaData$subj == 5),]
+#preds[which(asthmaData$subj == 6),]
+#preds[which(asthmaData$subj == 7),]
+#preds[which(asthmaData$subj == 8),]
+#preds[which(asthmaData$subj == 9),]
+#preds[which(asthmaData$subj == 10),]
+
+
 ```
 
 
 ```{r}
-data <- participant.scores
 
 
-# Set seed for reproducibility
-set.seed(7)
 
-# Fold data 
-data <- fold(
-  data = data, k = 4,
-  cat_col = 'diagnosis',
-  id_col = 'participant') %>% 
-  arrange(.folds)
+mixed_model_formulas <- c("score ~ age ",
+                          "score ~ gender + (1|subj) + (1|loc)")
 
-# Show first 15 rows of data
-data %>% head(15) %>% kable()
+
+CV <- cross_validate(data = asthmaData,
+  formulas = mixed_model_formulas,
+  fold_cols = '.folds',
+  family = 'gaussian',
+  REML = FALSE)
+
+
 
 ```
-
 
 
 Code Below is an example used to help with writing it for ours.
@@ -129,6 +208,8 @@ Link :https://cran.r-project.org/web/packages/cvms/readme/README.html#cross-vali
 ```{r}
 
 mixed_model_formulas <- c("score ~ diagnosis + (1|session)",
+                          "score ~ age + (1|session)",
+                          "score ~ diagnosis + (1|session)",
                           "score ~ age + (1|session)")
 
 CV4 <- cross_validate(
