@@ -106,7 +106,7 @@ CV <- cross_validate(data = asthmaData,
 
 ```{r}
 CV$Coefficients
-par(mfrow=c(2,2))
+par(mfrow=c(1,2))
 plot(CV$RMSE)
 plot(CV$AIC)
 plot(CV$MAE)
@@ -137,6 +137,8 @@ plot(CV$RMSE)
 plot(CV$AIC)
 ```
 
+
+
 ```{r}
 
 library("lattice")
@@ -149,7 +151,7 @@ bestModel = lmer(score ~ temp + hum  + uv + ws + gender + (1|subj) + (1|loc), da
 #dotplot(ranef(bestModel, condVar = TRUE))
 
 preds = predictInterval(bestModel, n.sims = 500, level = 0.9, stat = 'median')
-head(preds)
+#head(preds)
 
 ```
 
@@ -201,23 +203,9 @@ sjPlot::tab_model(bestModel)
 
 ```
 
-```{r}
 
 
 
-mixed_model_formulas <- c("score ~ age ",
-                          "score ~ gender + (1|subj) + (1|loc)")
-
-
-CV <- cross_validate(data = asthmaData,
-  formulas = mixed_model_formulas,
-  fold_cols = '.folds',
-  family = 'gaussian',
-  REML = FALSE)
-
-
-
-```
 
 
 Code Below is an example used to help with writing it for ours.
@@ -238,17 +226,6 @@ CV4 <- cross_validate(
 )
 
 CV4
-```
-
-
-
-
-
-```{r}
-
-m0.glm  = glm(ACTScore ~ 1, family = gaussian, data = lmmdata)
-m0.lmer = lmer(ACTScore ~ 1 + (1|subject), data = lmmdata)
-
 ```
 
 
