@@ -74,42 +74,13 @@ asthmaData$age = factor(asthmaData$age, levels = c(0:3), labels = c("Above 50","
 set.seed(7)
 
 # Fold data 
-asthmaData = fold(data = asthmaData, k = 4,
-            id_col = 'subj') %>% 
+asthmaData = fold(data = asthmaData, k = 3,
+            id_col = 'subj',num_fold_cols = 1,handle_existing_fold_cols = "keep") %>% 
             arrange(.folds)
 
 asthmaData %>% head(15) %>% kable()
 ```
 
-```{r}
-
-modelCombs = combine_predictors(
-  dependent = "score",
-  fixed_effects = c("temp","hum","gender","pres","uv"),
-  random_effects = "(1|subj)"
-)
-
-
-index = list()
-head(modelCombs)
-
-#for (i in 1:length(modelCombs)){
-#  if (grepl("*", modelCombs[i])){
-     
-#     index = append(index,i)
-    
-#  }
-#}
-  
-index
-```
-
-```{r}
-
-asthmaData$age = factor(asthmaData$age)
-
-
-```
 
 ```{r}
 ### Note: for some reason age is a problem in this
@@ -121,21 +92,50 @@ mixed_model_formulas <- c("score ~ 1",
                           "score ~ temp + hum  + uv + (1|subj) + (1|loc)",
                           "score ~ temp + hum  + uv + ws + (1|subj) + (1|loc)",
                           "score ~ temp + hum  + uv + ws + gender + (1|subj) + (1|loc)",
-                          "score ~ temp + hum  + uv + ws + gender + odj + (1|subj) + (1|loc)")
+                          "score ~ temp + hum  + uv + ws + gender + odj + (1|subj)")
 
 
 CV <- cross_validate(data = asthmaData,
   formulas = mixed_model_formulas,
   fold_cols = '.folds',
   family = 'gaussian',
-  REML = FALSE)
+  REML = FALSE,
+  preprocessing = "standardize")
+```
+
+
+```{r}
+CV$Coefficients
+par(mfrow=c(2,2))
+plot(CV$RMSE)
+plot(CV$AIC)
+plot(CV$MAE)
+```
+
+```{r}
+### Note: for some reason age is a problem in this
+mixed_model_formulas <- c("score ~ 1",
+                          "score ~ (1|subj)",
+                          "score ~ (1|loc)",
+                          "score ~ temp + (1|loc)",
+                          "score ~ hum + (1|loc)",
+                          "score ~ pres + (1|loc)",
+                          "score ~ gender + (1|loc)",
+                          "score ~ uv + (1|loc)",
+                          "score ~ ws + (1|loc)")
+
+
+CV <- cross_validate(data = asthmaData,
+  formulas = mixed_model_formulas,
+  fold_cols = '.folds',
+  family = 'gaussian',
+  REML = FALSE,
+  preprocessing = "standardize")
 
 par(mfrow=c(1,2))
 plot(CV$RMSE)
 plot(CV$AIC)
 ```
-
-
 
 ```{r}
 
@@ -149,9 +149,20 @@ bestModel = lmer(score ~ temp + hum  + uv + ws + gender + (1|subj) + (1|loc), da
 #dotplot(ranef(bestModel, condVar = TRUE))
 
 preds = predictInterval(bestModel, n.sims = 500, level = 0.9, stat = 'median')
-
+head(preds)
 
 ```
+
+
+```{r}
+
+plot(bestModel, subj ~ resid(.), abline = 0 ) # generate diagnostic plots
+
+plot(bestModel, resid(., type = "pearson") ~ fitted(.) | subj, id = 0.05, 
+     adj = -0.3, pch = 20, col = "gray40", cex = .5)
+
+```
+
 
 ```{r}
 library(influence.ME) # To get cooks distance
@@ -183,6 +194,12 @@ qqline(residuals(bestModel))
 
 ```
 
+
+```{r}
+
+sjPlot::tab_model(bestModel)
+
+```
 
 ```{r}
 

@@ -383,14 +383,14 @@ plot(subj10$WindSpeed,subj10$ACTScore)
 ```{r}
 
 #tc_grouped = trainControl(method = 'cv', number = 10, savePredictions = TRUE, 
-                          index = caret_splits$index, indexOut = caret_splits$indexOut)
+                          #index = caret_splits$index, indexOut = caret_splits$indexOut)
 
 #all_x = asthmaData %>%
-        select(-UserNo., -ACTScore) %>%
-        as.data.frame()
+       # select(-UserNo., -ACTScore) %>%
+      #  as.data.frame()
 
 #all_y = asthmaData %>%
-        pull(ACTScore)
+        #pull(ACTScore)
 
 #m_grouped = train(x = all_x, y = all_y, method = 'glm', 
        
@@ -423,7 +423,7 @@ folds <- groupKFold(subject, k = 7)
 ```
 
 ################################################################################
-## Mixture Model
+## Mixted Effects Model
 ```{r}
 train = asthmaData[folds$Fold1,]
 # Catagorical Data
@@ -452,7 +452,7 @@ ACT = train$ACTScore
 
 
 ```{r}
-model1 <- lmer(ACT ~  , data = train)
+model1 <- lmer(ACT ~ (1|subject), data = train)
 
 step_res1 <- step(model1)
 final1 <- get_model(step_res1)
@@ -461,13 +461,16 @@ step_res1
 ```
 
 ```{r}
-model2 <- lmer(ACT ~  (1|subject), data = train)
+library(lme4)
+model2 <- lmer(ACT ~  wind + gender + age + ODJ  +  pressure  + temp + hum +  (1|subject) + (1|loc), data = train)
 
 step_res2 <- step(model2)
 final2 <- get_model(step_res2)
 anova(final2)
 step_res2
 ```
+
+
 
 
 
@@ -480,18 +483,24 @@ The anova table below shows use which model is most significant.
 
 
 # Conditional means of the random effects
-model1 = lmer(ACT ~ wind + gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|subject) , data = train)
+model1 = glm(ACT ~ 1, data = train)
 
 model2 = lmer(ACT ~ (1|subject), data = train )
 
-model3 = lmer(ACT ~ hum + (hum|subject), data = train)
+model3 = lmer(ACT ~ (1|loc), data = train)
 
+model4 = lmer(ACT ~ (1|subject) + (1| loc), data = train)
+
+AIC(model1)
+AIC(model2)
+AIC(model3)
+AIC(model4)
 #model2 = lmer(ACT ~ gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = asthmaData_train )
 
 #model3 = lmer(ACT ~  ODJ + ODA + smoking +  pressure  + temp + hum +  (1|loc), data = train )
 
 #anova(model1,model2, model3)
-summary(model1)
+#summary(model1)
 #summary(model2)
 #summary(model3)
 #summary(model2)
@@ -503,12 +512,18 @@ summary(model1)
 
 ```{r}
 
-set.seed(23)
-train_control <- trainControl(method = "LOOCV")
-model <- train(ACTScore ~., data = training_dataset,
-               method = "lm",
-               trControl = train_control)
-print(model)
+model5 = lmer(ACT ~ wind + (1|subject) + (1| loc), data = train)
+
+model6 = lmer(ACT ~ hum + (1|subject) + (1| loc), data = train )
+
+model7 = lmer(ACT ~ pressure + (1|subject) + (1| loc), data = train)
+
+model8 = lmer(ACT ~ gender + (1|subject) + (1| loc), data = train)
+
+AIC(model5)
+AIC(model6)
+AIC(model7)
+AIC(model8)
 
 ```
 
