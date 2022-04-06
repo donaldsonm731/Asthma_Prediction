@@ -159,8 +159,12 @@ preds = predictInterval(bestModel, n.sims = 500, level = 0.9, stat = 'median')
 ```{r}
 
 plot(bestModel, subj ~ resid(.), abline = 0 ) # generate diagnostic plots
+plot(bestModel, loc ~ resid(.), abline = 0 ) # generate diagnostic plots
 
 plot(bestModel, resid(., type = "pearson") ~ fitted(.) | subj, id = 0.05, 
+     adj = -0.3, pch = 20, col = "gray40", cex = .5)
+
+plot(bestModel, resid(., type = "pearson") ~ fitted(.) | loc, id = 0.05, 
      adj = -0.3, pch = 20, col = "gray40", cex = .5)
 
 ```
