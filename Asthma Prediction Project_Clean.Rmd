@@ -53,27 +53,21 @@ Sources:
  
 # Practicum of Data Analytics Project
 
-##Importing
+## Importing
 ```{r}
 asthmaDataOriginal= read.csv("Asthma_Data_File.csv")  # Importing the data set 
 
 asthmaData = data.frame(asthmaDataOriginal[,-2])  # Removing id number for each subject
 
 head(asthmaData)  #Looking at the first 6 entries
-dim(asthmaDataOriginal)
-```
-
-## Splitting into Train & Test
-
-```{r}
-
-
-
+dim(asthmaData)
 ```
 
 
 ## Data Description
+
 The first summary doesn't give us to much information because half the inputs are chr. So, before looking at the properties of each feature we need to convert the strings to integers.
+
 ```{r}
 # Summary gives a description for each input and output, giving you a sense of what the data looks like
 summary(asthmaData)
@@ -82,9 +76,10 @@ dim(asthmaData)
 
 Removing the subject number and all the non categorical data. Then factoring each input.
 Now there are levels for each categorical input.
+
 ```{r}
 # Only want  to factor the categories so removing the columns listed below.
-# These are: subject, temp, humidity, windspeed and ACTScore.
+# These are: temp, humidity, windspeed and ACTScore.
 names = names(asthmaData[,c(-8,-10,-12,-13)]) 
 asthmaData[,names] = lapply(asthmaData[,names], factor)
 
@@ -93,12 +88,11 @@ str(asthmaData)
 contrasts(asthmaData$Location)
 ```
 
-```{r}
-head(asthmaData$OutdoorJob)
-```
+
 
 Bar plots and histograms give us an idea of the data in each category. 
 ```{r}
+barplot(prop.table(table(asthmaData$UserNo.)), main = 'Subject')
 barplot(prop.table(table(asthmaData$Age)), main = 'Age')
 barplot(prop.table(table(asthmaData$Gender)), main = 'Gender')
 barplot(prop.table(table(asthmaData$OutdoorJob)), main = 'Out Door Job')
@@ -108,9 +102,7 @@ barplot(prop.table(table(asthmaData$Pressure)), main = 'Pressure')
 barplot(prop.table(table(asthmaData$UVIndex)), main = 'UV Index')
 
 hist(asthmaData$Humidity, breaks = 25, main = 'Humidity')
-
 hist(asthmaData$Temperature, breaks = 25, main = 'temp')
-
 hist(asthmaData$WindSpeed, breaks = 25, main = 'wind')
 hist(asthmaData$ACTScore,breaks = 25, main = 'ACT score')
 ```
@@ -127,9 +119,87 @@ table(asthmaData$UVIndex)
 table(asthmaData$ACTScore)
 ```
 
+Looking at frequency and distribution of the ACT score that each user self reported.
+
+```{r}
+ggplot(asthmaData, aes(x = ACTScore)) +
+  geom_histogram(fill = "white", colour = "black", bins = 20) +
+  facet_grid(UserNo. ~ .)
+```
+
+
+
+
+## Splitting into Train & Test
+
+```{r}
+set.seed(28)
+
+groups <-        # Randomly assign train/test groups to all values of UserNo.
+  asthmaData %>%
+  select(UserNo.) %>%
+  distinct(UserNo.) %>%
+  rowwise() %>%
+  mutate(group = sample(
+    c("train", "test"),
+    1,
+    replace = TRUE,
+    prob = c(0.8, 0.2) 
+  ))
+
+groups
+
+# Join group assignments to my_dat
+asthmaData <- asthmaData %>%
+  left_join(groups)
+
+train = filter(asthmaData, group == "train")
+test = filter(asthmaData, group == "test")
+
+dim(train)
+```
+
+```{r}
+# Train Set
+# Catagorical Data
+subject = train$UserNo.
+loc = train$Location
+gender = train$Gender
+age = train$Age
+ODJ = train$OutdoorJob
+ODA = train$OutdoorActivities
+smoking = train$SmokingHabit
+pressure = train$Pressure
+uv = train$UVIndex
+# Continous Data
+temp = train$Temperature
+hum = train$Humidity
+wind = train$WindSpeed
+# Y value
+ACT = train$ACTScore
+
+# Test Set
+# Catagorical Data
+test_subject = test$UserNo.
+test_loc = test$Location
+test_gender = test$Gender
+test_age = test$Age
+test_ODJ = test$OutdoorJob
+test_ODA = test$OutdoorActivities
+test_smoking = test$SmokingHabit
+test_pressure = test$Pressure
+test_uv = test$UVIndex
+# Continous Data
+test_temp = test$Temperature
+test_hum = test$Humidity
+test_wind = test$WindSpeed
+# Y value
+test_ACT = test$ACTScore
+```
+
 
 ## Finding outliers in the categorical/numeric data
-To find outliers, we will have a box plot of each input that is categorical and put it against the inputs that are continuous.Finding the outliers using Boxplot (finds points outside 1.5*IQR), as well as to get a better understanding the distribution of the features a box plot was made. 
+To find outliers, we will have a box plot of each input that is categorical and put it against the inputs that are continuous.Finding the outliers using Boxplot (finds points outside 1.5*IQR), as well as to get a better understanding the distribution of the features a box plot was made. We do this for each, train and test, set.
 
 First plotting 1 categorical input at a time with temp humidity
 
@@ -143,25 +213,18 @@ First plotting 1 categorical input at a time with temp humidity
 
 # Source for this: http://www.unige.ch/ses/sococ/cl/r/bapr.e.html
 
-outlier_ageH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Age,data=asthmaData, xlab = 'Age Category', ylab = 'Humidity (%)'))
-
-outlier_genderH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Gender,data=asthmaData))
-
-outlier_smH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$SmokingHabit,data=asthmaData))
-
-outlier_ODJH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$OutdoorJob,data=asthmaData))
-
-outlier_ODAH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$OutdoorActivities,data=asthmaData))
-
-outlier_pH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Pressure,data=asthmaData))
-
-outlier_UVH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$UVIndex,data=asthmaData))
+outlier_ageH = as.numeric(Boxplot(hum~age))
+outlier_genderH = as.numeric(Boxplot(hum~gender))
+outlier_smH = as.numeric(Boxplot(hum~smoking))
+outlier_ODJH = as.numeric(Boxplot(hum~ODJ))
+outlier_ODAH = as.numeric(Boxplot(hum~ODA))
+outlier_pH = as.numeric(Boxplot(hum~pressure))
+outlier_UVH = as.numeric(Boxplot(hum~uv))
 
 # The last part combines all the outlier indices found as a vector and keeps all 
 # number once, so say 114 is stored twice then the unique() will just take one 
 # of them out
 totOutlier_H = c(outlier_ageH, outlier_genderH, outlier_smH, outlier_ODJH, outlier_ODAH,outlier_pH, outlier_UVH)
-
 table(totOutlier_H)
 ```
 
@@ -173,19 +236,14 @@ Next plotting 1 cat. at a time with
 # 1.5 times outside the IQR, I then take those points, convert them from chr to
 # numberic and store it as an outlier. I think take the union of all the outliers
 # to keep track of when looking at other inputs that are continuous.
-outlier_ageT = as.numeric(Boxplot(asthmaData$Temperature ~asthmaData$Age,data=asthmaData))
 
-outlier_genderT = as.numeric(Boxplot(asthmaData$Temperature ~asthmaData$Gender,data=asthmaData))
-
-outlier_smT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$SmokingHabit,data=asthmaData))
-
-outlier_ODJT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$OutdoorJob,data=asthmaData))
-
-outlier_ODAT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$OutdoorActivities,data=asthmaData))
-
-outlier_pT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$Pressure,data=asthmaData))
-
-outlier_UVT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$UVIndex,data=asthmaData))
+outlier_ageT = as.numeric(Boxplot(temp~age))
+outlier_genderT = as.numeric(Boxplot(temp~gender))
+outlier_smT = as.numeric(Boxplot(temp~smoking))
+outlier_ODJT = as.numeric(Boxplot(temp~ODJ))
+outlier_ODAT = as.numeric(Boxplot(temp~ODA))
+outlier_pT = as.numeric(Boxplot(temp~pressure))
+outlier_UVT = as.numeric(Boxplot(temp~uv))
 
 # The last part combines all the outlier indices found as a vector and keeps all 
 # number once, so say 114 is stored twice then the unique() will just take one 
@@ -201,27 +259,20 @@ lastly, plotting 1 cat at a time with windspeed
 # 1.5 times outside the IQR, I then take those points, convert them from chr to
 # numberic and store it as an outlier. I think take the union of all the outliers
 # to keep track of when looking at other inputs that are continuous.
-outlier_ageW = as.numeric(Boxplot(asthmaData$WindSpeed ~asthmaData$Age,data=asthmaData))
-#length(asthmaData$Age[outlier_ageW])/length(asthmaData$Age[asthmaData$Age == 4])
 
-outlier_genderW = as.numeric(Boxplot(asthmaData$WindSpeed ~asthmaData$Gender,data=asthmaData))
-#length(asthmaData$Gender[outlier_genderW])/length(asthmaData$Gender[asthmaData$Gender == 0])
-
-outlier_smW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$SmokingHabit,data=asthmaData))
-
-outlier_ODJW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$OutdoorJob,data=asthmaData))
-
-outlier_ODAW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$OutdoorActivities,data=asthmaData))
-
-outlier_pW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$Pressure,data=asthmaData))
-
-outlier_UVW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$UVIndex,data=asthmaData))
+outlier_ageW = as.numeric(Boxplot(wind~age))
+outlier_genderW = as.numeric(Boxplot(wind~gender))
+outlier_smW = as.numeric(Boxplot(wind~smoking))
+outlier_ODJW = as.numeric(Boxplot(wind~ODJ))
+outlier_ODAW = as.numeric(Boxplot(wind~ODA))
+outlier_pW = as.numeric(Boxplot(wind~pressure))
+outlier_UVW = as.numeric(Boxplot(wind~uv))
 
 # The last part combines all the outlier indices found as a vector and keeps all 
 # number once, so say 114 is stored twice then the unique() will just take one 
 # of them out
-totOutlier_W = c(outlier_ageW, outlier_genderW, outlier_smW, outlier_ODJW, outlier_ODAW,outlier_pW, outlier_UVW)
 
+totOutlier_W = c(outlier_ageW, outlier_genderW, outlier_smW, outlier_ODJW, outlier_ODAW,outlier_pW, outlier_UVW)
 table(totOutlier_W)
 
 ```
@@ -238,18 +289,20 @@ repOutliers = which(table(totOutliers) > 1) #Gives the indices for the the ones 
 
 # This ensures that if we run the code again it will not take more
 # Data out, just noticed it was going down when this was not added
-if(dim(asthmaData)[1] == dim(asthmaDataOriginal)[1]){
-  asthmaData= asthmaData[-c(repOutliers),]
+if(dim(train)[1] == 757){
+  train= train[-c(repOutliers),]
 }
 # Visual help that outliers are only removed once
 dim(asthmaData)
+dim(test)
+dim(train)
 length(repOutliers)
 length(unique(totOutliers))
 ```
 
 Check to see all inputs and categories are still represented
 ```{r}
-# Age group aboce 50 lost 23 instances, not sig. for the group
+# Age group above 50 lost 23 instances, not sig. for the group
 # Males also lost 23 instances
 # ODJ: Occationally lost 23 instances
 # Extremely likely : lost 23 instances
@@ -357,47 +410,9 @@ plot(subj10$WindSpeed,subj10$ACTScore)
 
 
 
-##############################################################################
-## Training and Test Set
-```{r}
-# Train with leaving 3 people out
-set.seed(3)
-
-#index = createDataPartition(asthmaData, p = .75, list = FALSE)
-
-#train = asthmaData[index,]
-#test = asthmaData[-index,]
-
-# This groups the data into k-folds, leaving out some of the patients
-# to ensure more robust model.
-subject = asthmaData$UserNo.
-folds <- groupKFold(subject, k = 7) 
-```
-
 ################################################################################
 ## Mixted Effects Model
-```{r}
-train = asthmaData[folds$Fold1,]
-# Catagorical Data
-subject = train$UserNo.
-loc = train$Location
-gender = train$Gender
-age = train$Age
-ODJ = train$OutdoorJob
-ODA = train$OutdoorActivities
-smoking = train$SmokingHabit
-pressure = train$Pressure
-uv = train$UVIndex
 
-# Continous Data
-temp = train$Temperature
-hum = train$Humidity
-wind = train$WindSpeed
-
-# Y value
-ACT = train$ACTScore
-
-```
 
 
 ### Backward feature selection
@@ -994,379 +1009,5 @@ index_outliers_p
 ```
 
 
-################################################################################
-## OUTLIER DETECTION METHODS
 
-```{r}
-library(OutlierDetection)
-library(OutliersO3)
-library(outliers)
-```
 
-
-# OUtlier Detection
-# -Note: all the univariate statistical tests were excluded from this because  
-#  our data inputs are correlated
-# I don't think distance should be used here because we are working in a high dimension But kept them in to discuss.
-
-
-Depth-based Approach:
-```{r}
-X <- asthmaData[,1:10]
-
-Y <- depthout(X,cutoff=0.03) # This yields about 3% of our data as outliers
-D <- Y$`Location of Outlier`
-D
-```
-
-Mahalanobis Distance
-
-```{r}
-Y <- maha(X,cutoff=0.95)
-E <- Y$`Location of Outlier`
-E
-```
-
-k Nearest Neighbours Distance method
-
-```{r}
-
-Y <- nn(X,k=5)
-K <- Y$`Location of Outlier`
-K
-```
-
-
-kth Nearest Neighbour Distance method
-
-```{r}
-
-Y <- nnk(X,k=5)
-G <- Y$`Location of Outlier`
-G
-```
-
-
-```{r}
-intersect(K,G)
-```
-
-Outlier detection using Robust Kernal-based Outlier Factor(RKOF) algorithm
-
-```{r}
-
-Y <- dens(X,k=4,C=1)
-H <- Y$`Location of Outlier`
-H
-```
-
-
-Outlier detection using generalised dispersion
-
-```{r}
-
-Y <- disp(X,cutoff=0.99)
-I <- Y$`Location of Outlier`
-I
-```
-```{r}
-intersect(I,H)
-
-```
-
-
-Joint assessment of outlier detection methods
-
-```{r}
-
-Y <- OutlierDetection(X,depth = TRUE,dens = TRUE)
-J <- Y$`Location of Outlier`
-J
-```
-
-c) Report outlier based on consensus rule based on all the techniques that applied to your data sets.
-
-
-```{r}
-out_list <- append(A, B)
-out_list <- append(out_list, C)
-out_list <- append(out_list, D)
-out_list <- append(out_list, E)
-out_list <- append(out_list, K)
-out_list <- append(out_list, G)
-out_list <- append(out_list, H)
-out_list <- append(out_list, I)
-out_list <- append(out_list, J)
-
-length(out_list)
-```
-
-
-```{r}
-L <- as.data.frame(table(out_list))
-M <- L$Freq > 5
-N <- which(M == TRUE)
-length(N)
-```
-
-
-################################################################################
-## PCA Analysis
-
-```{r}
-####  Step 1: Standardization ####
-# This standardizes the data with z = (value - mean)/sd
-#head(asthmaData[,1:10])
-asthmaData_scaled = scale(asthmaData[,1:10]) # This standardizes the input data 
-#summary(asthmaData_scaled) # Checking standardization
-
-#### Step 2: Finding Cov matrix ####
-cov_matrix = cov(asthmaData_scaled)
-#cov_matrix # Checking cov_matrix
-```
-
-
-```{r}
-#### Step 3: Computing eigen values and eigenvectors of Cov-matrix to identify principle components ###
-eigen = eigen(cov_matrix)
-# eigen$vectors and eigen$values for the vectors and values
-#eigen$values # Looks like the eigen values are already ordered
-
-#### Step 4: Seeing percentage of variance accounted for by each comp. ####
-plot(eigen$values)
-```
-
-```{r}
-#### Selecting amount of features we want #### 
-
-# First find the percent variance in each 
-sum_eig = sum(eigen$values)
-per_var = eigen$values/sum_eig
-#print(per_var) # Gives percentage of variance in each component
-# We will select amount of components that gives us at least 95% of the variance
-
-# From the output this can be seen to be the first 8 eigen values.
-#sum(per_var[0:7])
-
-featureVector = eigen$vectors # Getting features we want
-#dim(asthmaData_scaled)
-#dim(featureVector)
-asthmaData.pca = asthmaData_scaled %*% featureVector # Transforming Data
-
-## Adding the output column back in
-asthmaData.pca = cbind(asthmaData.pca, asthmaData[,11])
-
-```
-
-```{r}
-#### Checking work from above #### 
-
-#asthmaData.pca<-princomp(asthmaData_scaled[])
-#plot(asthmaData.pca, main="Proportions of variance explained by the components")
-
-
-```
-
-###############################################################################
-# Outlier detetion on Transformed data
-```{r}
-#head(asthmaData.pca)
-x = asthmaData.pca[,1:10]
-y = dens(x,k=4,C=1)
-y$`Location of Outlier`
-
-```
-
-
-```{r}
-# generalized dispersion
-ol = disp(x,cutoff=0.05)
-ol$`Location of Outlier`
-
-```
-
-```{r}
-index = OutlierDetection(x)$`Location of Outlier`
-
-
-```
-
-
-
-
-################################################################################
-
-## Trying a multivariate linear regression
-```{r}
-# y = b0 + b1*v1 + b2*v2 ... + bn*vn
-set.seed(24)
-#head(asthmaData.pca)
-## Creating and training and test data set.
-#dt = sort(sample(nrow(asthmaData.pca), nrow(asthmaData.pca)*.7))
-size = 0.75*nrow(asthmaData.pca)
-numRows = dim(asthmaData.pca)[1]
-
-training_index = sort(sample(numRows, size, replace = FALSE, prob = NULL))
-test_index = setdiff(1:numRows,training_index)
-
-xTrain = asthmaData.pca[training_index,1:10]
-yTrain = asthmaData.pca[training_index,11]
-xTest = asthmaData.pca[test_index,1:10]
-yTest = asthmaData.pca[test_index,11]
-```
-
-
-
-# Making a fit
-```{r}
-v1 = xTrain[,1]
-v2 = xTrain[,2]
-v3 = xTrain[,3]
-v4 = xTrain[,4]
-v5 = xTrain[,5]
-v6 = xTrain[,6]
-v7 = xTrain[,7]
-v8 = xTrain[,8]
-v9 = xTrain[,9]
-v10 = xTrain[,10]
-
-
-y = yTrain
-
-fit = lm(y ~ v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8 + v9 + v10)
-
-summary(fit)
-```
-```{r}
-#Residuals
-resid = fit$residuals
-#R^2 value
-r_sq = summary(fit)$r.squared
-# F-Test Statistic
-F_stat = summary(fit)$fstat
-# C.I. for regression CO
-coef_CI = confint(fit)
-
-# Note the outputs below give an insight into how our model is doing. 
-# we see an r^2 or 0.674
-anova(fit)
-
-#print(sum((resid)^2))
-#print(r_sq)
-#print(F_stat)
-print(coef_CI)
-
-#vcov(fit) # Last one is interesting to see, bc using PCA they should be around 0
-```
-
-## Predicting Values and MSE
-Note the MSE can be seen from the ANOVA table, just done for practice
-```{r}
-
-b0 = fit$coefficients[1]
-b = fit$coefficients[2:11]
-x = xTest
-#dim(x)
-
-y_pred = b0 + x %*% b 
-head(y_pred,6)
-# MSE
-#sum((y_pred - yTrain)^2)
-
-```
-
-```{r}
-# Testing Prediction with r function, the prediction is the same...
-# But look at how big the prediction interval is!!!
-#xTest[1,]
-newdata = data.frame(xTest)
-#xTest[1,1], + xTest[1,2], + xTest[1,3], + xTest[1,4], + xTest[1,5], + xTest[1,6], + xTest[1,7], + xTest[1,8], + xTest[1,9], + xTest[1,10]
-predictions = predict(fit,newdata,interval = "prediction")
-head(predictions)
-```
-
-
-```{r}
-# Getting MSE of our predicted values
-y_true = test[,8]
-y_predicted = predictions[1,]
-y_predicted
-#error = y_true - y_predicted
-#MSE = sum(error^2)
-#MSE
-
-
-```
-
-
-#################################################################################
-Looking at Random Forest
-```{r}
-library(randomForest)
-fit_rf = randomForest(train[,1:7], train[,8])
-
-y_pred_rf = predict(fit_rf,test[,1:7])
-
-#y_pred_rf[1]
-#test[1,8]
-### MSE
-MSE_rf = sum((y_pred_rf - test[,8])^2)
-
-diff = (round(y_pred_rf) - test[,8])^2
-length(diff[diff == 0]) # Number of correct classifications
-```
-
-#######################################################
-Cross-Valdidation
-
-```{r}
-set.seed(23)
-random_sample <- createDataPartition(asthmaData$ACTScore,
-                                p = 0.7, list = FALSE)
-training_dataset  <- asthmaData[random_sample, ]
-testing_dataset <- asthmaData[-random_sample, ]
-model <- lm(ACTScore ~., data = training_dataset)
-predictions <- predict(model, testing_dataset)
-
-data.frame( R2 = R2(predictions, testing_dataset $ ACTScore),
-            RMSE = RMSE(predictions, testing_dataset $ ACTScore),
-            MAE = MAE(predictions, testing_dataset $ ACTScore))
-```
-
-```{r}
-set.seed(23)
-train_control <- trainControl(method = "LOOCV")
-model <- train(ACTScore ~., data = training_dataset,
-               method = "lm",
-               trControl = train_control)
-print(model)
-```
-
-
-```{r}
-set.seed(23)
-train_control <- trainControl(method = "cv",
-                              number = 10)
-model <- train(ACTScore ~., data = training_dataset,
-               method = "lm",
-               trControl = train_control)
-print(model)
-#model$finalmodel
-```
-
-```{r}
-predict(model$finalModel, newdata = data.frame(testing_dataset), interval = "prediction")
-```
-
-
-
-```{r}
-set.seed(23)
-train_control <- trainControl(method = "repeatedcv",
-                            number = 10, repeats = 3)
-model <- train(ACTScore ~., data = training_dataset,
-               method = "lm",
-               trControl = train_control)
-print(model)
-#model$finalmodel
-```
