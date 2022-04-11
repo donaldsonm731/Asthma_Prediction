@@ -23,7 +23,6 @@ library(lmerTest)
                    #"vcd", "visreg", "MuMIn", "lmerTest", "shiny"))
 ```
 
-???? Standardize after removing outliers, right?????
 
 --> how each subject rates their asthma
 --> look at the type of factoring (maybe 0,1,2)
@@ -52,77 +51,6 @@ Sources:
 - Regressing Cat. data: https://advstats.psychstat.org/book/mregression/catpredictor.php
 - Coding Cat. Data: https://stats.oarc.ucla.edu/r/modules/coding-for-categorical-variables-in-regression-models/
  
- ## By Subject plots
-```{r}
-subj1 = asthmaData[asthmaData$UserNo. == 1,]
-subj2 = asthmaData[asthmaData$UserNo. == 2,]
-subj3 = asthmaData[asthmaData$UserNo. == 3,]
-subj4 = asthmaData[asthmaData$UserNo. == 4,]
-subj5 = asthmaData[asthmaData$UserNo. == 5,]
-subj6 = asthmaData[asthmaData$UserNo. == 6,]
-subj7 = asthmaData[asthmaData$UserNo. == 7,]
-subj8 = asthmaData[asthmaData$UserNo. == 8,]
-subj9 = asthmaData[asthmaData$UserNo. == 9,]
-subj10 = asthmaData[asthmaData$UserNo. == 10,]
-
-sprintf('Number of Instances per Subject')
-sprintf('Subject 1: %f',dim(subj1)[1])
-sprintf('Subject 2: %f',dim(subj2)[1])
-sprintf('Subject 3: %f',dim(subj3)[1])
-sprintf('Subject 4: %f',dim(subj4)[1])
-sprintf('Subject 5: %f',dim(subj5)[1])
-sprintf('Subject 6: %f',dim(subj6)[1])
-sprintf('Subject 7: %f',dim(subj7)[1])
-sprintf('Subject 8: %f',dim(subj8)[1])
-sprintf('Subject 9: %f',dim(subj9)[1])
-sprintf('Subject 10: %f',dim(subj10)[1])
-
-
-```
-
-
-## ACTScore vs Temp by subject
-```{r}
-plot(subj1$Temperature,subj1$ACTScore)
-plot(subj2$Temperature,subj2$ACTScore)
-plot(subj3$Temperature,subj3$ACTScore)
-plot(subj4$Temperature,subj4$ACTScore)
-plot(subj5$Temperature,subj5$ACTScore)
-plot(subj6$Temperature,subj6$ACTScore)
-plot(subj7$Temperature,subj7$ACTScore)
-plot(subj8$Temperature,subj8$ACTScore)
-plot(subj9$Temperature,subj9$ACTScore)
-plot(subj10$Temperature,subj10$ACTScore)
-```
-
-
-## ACTScore vs humidity by subject
-```{r}
-plot(subj1$Humidity,subj1$ACTScore)
-plot(subj2$Humidity,subj2$ACTScore)
-plot(subj3$Humidity,subj3$ACTScore)
-plot(subj4$Humidity,subj4$ACTScore)
-plot(subj5$Humidity,subj5$ACTScore)
-plot(subj6$Humidity,subj6$ACTScore)
-plot(subj7$Humidity,subj7$ACTScore)
-plot(subj8$Humidity,subj8$ACTScore)
-plot(subj9$Humidity,subj9$ACTScore)
-plot(subj10$Humidity,subj10$ACTScore)
-```
-
-## ACTScore vs windspeed by subject 
-```{r}
-plot(subj1$WindSpeed,subj1$ACTScore)
-plot(subj2$WindSpeed,subj2$ACTScore)
-plot(subj3$WindSpeed,subj3$ACTScore)
-plot(subj4$WindSpeed,subj4$ACTScore)
-plot(subj5$WindSpeed,subj5$ACTScore)
-plot(subj6$WindSpeed,subj6$ACTScore)
-plot(subj7$WindSpeed,subj7$ACTScore)
-plot(subj8$WindSpeed,subj8$ACTScore)
-plot(subj9$WindSpeed,subj9$ACTScore)
-plot(subj10$WindSpeed,subj10$ACTScore)
-```
 
 
  
@@ -477,5 +405,6 @@ AIC(model3)
 AIC(model4)
 
 AIC(final2)
+AIC(backmodel4)
 ```
 
