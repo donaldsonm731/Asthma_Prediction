@@ -74,7 +74,6 @@ The first summary doesn't give us to much information because half the inputs ar
 ```{r}
 # Summary gives a description for each input and output, giving you a sense of what the data looks like
 summary(asthmaData)
-dim(asthmaData)
 ```
 
 Removing the subject number and all the non categorical data. Then factoring each input.
@@ -107,7 +106,7 @@ barplot(prop.table(table(asthmaData$UVIndex)), main = 'UV Index')
 hist(asthmaData$Humidity, breaks = 25, main = 'Humidity')
 hist(asthmaData$Temperature, breaks = 25, main = 'temp')
 hist(asthmaData$WindSpeed, breaks = 25, main = 'wind')
-hist(asthmaData$ACTScore,breaks = 25, main = 'ACT score')
+hist(asthmaData$ACTScore,breaks = 17, main = 'ACT score')
 ```
 
 
@@ -380,7 +379,7 @@ step_res3
 ```
 
 ```{r}
-backmodel4 <- lmer(ACT ~  wind + gender + ODJ + ODA + pressure + hum +  (1|subject), data = train)
+backmodel4 <- lmer(ACT ~  wind + gender + ODJ  + pressure + hum +  (1|subject), data = train)
 
 step_res4 <- step(backmodel4)
 final4 <- get_model(step_res4)
