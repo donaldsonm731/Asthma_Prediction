@@ -83,6 +83,10 @@ asthmaData %>% head(15) %>% kable()
 
 
 ```{r}
+# Cat to numerical output look at anova.
+# Look at corr for continuous
+
+
 ### Note: for some reason age is a problem in this
 mixed_model_formulas <- c("score ~ 1",
                           "score ~ (1|subj)",
@@ -171,6 +175,8 @@ plot(bestModel, resid(., type = "pearson") ~ fitted(.) | loc, id = 0.05,
 
 
 ```{r}
+
+# Kolmogorac- smrnov test  
 library(influence.ME) # To get cooks distance
 #par(mfrow=c(1,2))
 
