@@ -5,6 +5,13 @@ date: "2/8/2022"
 output: html_document
 ---
 
+--- 
+title: "Asthma Attack Predictions"
+author: "Kadie Iverson & Matthew Donaldson"
+date: "2/8/2022"
+output: html_document
+---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
@@ -129,25 +136,7 @@ ggplot(asthmaData, aes(x = ACTScore)) +
   facet_grid(UserNo. ~ .)
 ```
 
-```{r}
-#t1 = c(164, 172, 168, 177, 156, 195)
-#t2 = c(178, 191, 197, 182, 185, 177)
-#t3 = c(175, 193, 178, 171, 163, 176)
-#t4 = c(155, 166, 149, 164, 170, 168)
 
-#val = c(t1, t2, t3, t4)
-#fac = gl(n=4, k=6, labels=c('type1', 'type2', 'type3', 'type4'))
-
-#aov1 = aov(asthmaData$ACTScore ~ asthmaData$Age)
-#summary(aov1)
-
-#aov2 = aov(asthmaData$ACTScore ~ asthmaData$WindSpeed)
-#summary(aov2)
-
-library('rcompanion')
-cramerV(asthmaData$OutdoorJob, asthmaData$OutdoorActivities, bias.correct = FALSE)
-cramerV(asthmaData$SmokingHabit, asthmaData$Gender, bias.correct = FALSE)
-```
 
 
 ## Splitting into Train & Test
@@ -364,27 +353,9 @@ test_wind = scale(test_wind, scale = TRUE)
 
 
 ## Mixted Effects Model
-### Intial lmer Models
-The first model uses as many inputs as it can without getting a singular error and a random effect from the subjects. Model 2, same as 1 but now random effect is location. Model 3 also R.E. is location but with less variables.
-
-The AIC score below shows use which model is most significant. between fixed effects model and which random effects model. Fro this we can see by adding random effects, it lowers the AIC scorem, telling us the random effects help.
-```{r}
-# Conditional means of the random effects
-model1 = glm(ACT ~ 1, data = train)
-model2 = lmer(ACT ~ (1|subject), data = train )
-model3 = lmer(ACT ~ (1|loc), data = train)
-model4 = lmer(ACT ~ (1|subject) + (1| loc), data = train)
-
-AIC(model1)
-AIC(model2)
-AIC(model3)
-AIC(model4)
-
-
-```
-
 
 ### Backward feature selection
+
 
 ```{r}
 backmodel1 <- lmer(ACT ~ (1|subject), data = train)
@@ -423,97 +394,32 @@ anova(final4)
 step_res4
 ```
 
-Here
+### Intial lmer Models
+The first model uses as many inputs as it can without getting a singular error and a random effect from the subjects. Model 2, same as 1 but now random effect is location. Model 3 also R.E. is location but with less variables.
+
+The anova table below shows use which model is most significant.
 ```{r}
-library(MuMIn)
+# Conditional means of the random effects
+model1 = glm(ACT ~ 1, data = train)
+model2 = lmer(ACT ~ (1|subject), data = train )
+model3 = lmer(ACT ~ (1|loc), data = train)
+model4 = lmer(ACT ~ (1|subject) + (1| loc), data = train)
+
+AIC(model1)
+AIC(model2)
+AIC(model3)
+AIC(model4)
+
 AIC(final2)
 AIC(backmodel4)
-AIC(backmodel3)
-
-summary(final2)$r.squared
-r.squaredGLMM(backmodel4)
-r.squaredGLMM(backmodel3)
-
-
-# installed rcompanion and MuMIn
-
 ```
 
 
-```{r}
-library(tidyverse)
-library(caret)
-library(car)
-library(olsrr)
-library(lme4)
-library(shiny)
-library(cvms)
-library(groupdata2)   # fold() partition()
-library(knitr)        # kable()
-library(dplyr)        # %>% arrange()
-library(ggplot2)
-set.seed(7)
-
-
-# Fold data 
-train = fold(data = train, k = 3,
-            id_col = 'UserNo.',num_fold_cols = 1,handle_existing_fold_cols = "keep") %>%
-            arrange(.folds)
-            
-
-train %>% head(15) %>% kable()
-```
-
+## Predicting on Test set
 ```{r}
 
-### Note: for some reason age is a problem in this
-mixed_model_formulas <- c("ACTScore ~ (1|UserNo.) + (1|Location)",
-                          "ACTScore ~ WindSpeed + Gender + OutdoorJob + OutdoorActivities + Pressure +                                        Humidity+(1|UserNo.) + (1|Location)",
-                          "ACTScore ~ WindSpeed + Gender + OutdoorJob + OutdoorActivities + Pressure +                                        Humidity",
-                          "ACTScore ~ SmokingHabit")
+predict = predict(backmodel2,)
 
-
-CV <- cross_validate(data = train,
-  formulas = mixed_model_formulas,
-  fold_cols = '.folds',
-  family = 'gaussian',
-  REML = FALSE,
-  preprocessing = "standardize")
-
-par(mfrow=c(1,2))
-plot(CV$RMSE)
-plot(CV$AIC)
-```
-
-
-
-```{r}
-
-library("lattice")
-library("merTools")
-
-bestModel = lmer(score ~ temp + hum  + uv + ws + gender + (1|subj) + (1|loc), data = asthmaData)
-
-
-#summary(bestModel)
-#dotplot(ranef(bestModel, condVar = TRUE))
-
-preds = predictInterval(bestModel, n.sims = 500, level = 0.9, stat = 'median')
-#head(preds)
-
-```
-
-
-```{r}
-
-plot(bestModel, subj ~ resid(.), abline = 0 ) # generate diagnostic plots
-plot(bestModel, loc ~ resid(.), abline = 0 ) # generate diagnostic plots
-
-plot(bestModel, resid(., type = "pearson") ~ fitted(.) | subj, id = 0.05, 
-     adj = -0.3, pch = 20, col = "gray40", cex = .5)
-
-plot(bestModel, resid(., type = "pearson") ~ fitted(.) | loc, id = 0.05, 
-     adj = -0.3, pch = 20, col = "gray40", cex = .5)
 
 ```
 
