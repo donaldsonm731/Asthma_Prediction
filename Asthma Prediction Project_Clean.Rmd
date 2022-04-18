@@ -23,6 +23,7 @@ library(shiny)
 library(cvms)
 library(groupdata2)
 library(lmerTest)
+library(glmnet)
 
 #install.packages(c("boot", "car", "caret", "tidyverse",  "effects", "foreign", 
                    #"Hmisc", "DT", "knitr", "lme4", "MASS", "mlogit", "msm", 
@@ -131,6 +132,7 @@ table(asthmaData$ACTScore)
 Looking at frequency and distribution of the ACT score that each user self reported.
 
 ```{r}
+jpeg(file="saving_plot1.jpeg") 
 ggplot(asthmaData, aes(x = ACTScore)) +
   geom_histogram(fill = "white", colour = "black", bins = 20) +
   facet_grid(UserNo. ~ .)
@@ -358,7 +360,7 @@ test_wind = scale(test_wind, scale = TRUE)
 
 
 ```{r}
-backmodel1 <- lmer(ACT ~ (1|subject), data = train)
+backmodel1 <- lmer(ACT ~ wind + hum + gender + ODJ + ODA + pressure + uv + (1|subject) + (1|loc) + (0 + gender|subject) + (0 + gender|loc) + (0 + age|subject) + (0 + age|loc), data = train)
 
 step_res1 <- step(backmodel1)
 final1 <- get_model(step_res1)
@@ -367,7 +369,7 @@ step_res1
 ```
 
 ```{r}
-backmodel2 <- lmer(ACT ~  wind + gender + age + ODJ + ODA + smoking +  pressure  + temp + hum +  (1|subject) + (1|loc), data = train)
+backmodel2 <- lmer(ACT ~  wind + temp + hum + gender + age + ODJ + ODA + smoking +  pressure + uv + (1|subject) + (1|loc) + (0 + gender|subject) + (0 + gender|loc) + (0 + age|subject) + (0 + age|loc), data = train)
 
 step_res2 <- step(backmodel2)
 final2 <- get_model(step_res2)
@@ -394,6 +396,43 @@ anova(final4)
 step_res4
 ```
 
+
+
+
+
+## Predicting on Test set
+```{r}
+
+predict = predict(backmodel2,)
+
+
+```
+
+
+
+## Testing lasso with model
+
+```{r}
+
+data(QuickStartExample)
+x <- QuickStartExample$x
+y <- QuickStartExample$y
+
+train_m = data.matrix(train)
+#head(train_m[,3])
+fit <- glmnet(train_m[,3:12], train_m[,13])
+
+plot(fit,label = TRUE)
+
+#fit$a0
+plot(fit$dev.ratio) # The fraction of (null) deviance explained (for "elnet", this is the R-square)
+fit$lambda[30]
+fit$df[30]
+coef(fit, s = 0.1)
+
+
+```
+
 ### Intial lmer Models
 The first model uses as many inputs as it can without getting a singular error and a random effect from the subjects. Model 2, same as 1 but now random effect is location. Model 3 also R.E. is location but with less variables.
 
@@ -415,12 +454,6 @@ AIC(backmodel4)
 ```
 
 
-## Predicting on Test set
-```{r}
 
-predict = predict(backmodel2,)
-
-
-```
 
 
