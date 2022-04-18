@@ -423,12 +423,28 @@ plot(fit,label = TRUE)
 
 #fit$a0
 plot(fit$dev.ratio) # The fraction of (null) deviance explained (for "elnet", this is the R-square)
-fit$lambda[30]
-fit$df[30]
-coef(fit, s = 0.5) # coeff with 50% sparsity. (I think). It shows 5 features and is confirmed on the plot that it is the features that break away from the middle line the fastest. 
+#fit$dev.ratio
+i = 5
+fit$lambda[i]
+fit$dev.ratio[i]
+points(i,fit$dev.ratio[i], pch = 19,col = 'red')
+fit$df[i]
+coef(fit, s = fit$lambda[i]) # coeff with 50% sparsity. (I think). It shows 5 features and is confirmed on the plot that it is the features that break away from the middle line the fastest. 
+
+assess = assess.glmnet(fit, newx = train_m[,3:12 ], newy = train_m[,13])
+
+plot(assess$mse)
+points(i,assess$mse[i], pch = 19, col = 'red')
+plot(assess$mae)
+points(i,assess$mae[i], pch = 19, col = 'red')
+cv.glmnet(train_m[,3:12], train_m[,13])
+
 
 # wind + gender + ODJ + pressure + hum
 ```
+
+
+
 
 Attempting to expand on the lasso part by running it with the mixed effects, not just the fixed effects to compare feature selection.
 
@@ -437,6 +453,21 @@ Attempting to expand on the lasso part by running it with the mixed effects, not
 
 #lm1 = glmmLasso(train[,13] ~ train[,10], rnd = list(subject=~1),
 #lambda=10, data = train)
+
+
+
+```
+
+
+
+
+```{r}
+
+
+best_model = lm(ACT~ hum + wind + gender + uv)
+summary(best_model)
+
+confint(best_model)
 
 
 
