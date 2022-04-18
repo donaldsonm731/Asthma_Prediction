@@ -24,6 +24,7 @@ library(cvms)
 library(groupdata2)
 library(lmerTest)
 library(glmnet)
+library(glmmLasso)
 
 #install.packages(c("boot", "car", "caret", "tidyverse",  "effects", "foreign", 
                    #"Hmisc", "DT", "knitr", "lme4", "MASS", "mlogit", "msm", 
@@ -414,10 +415,6 @@ predict = predict(backmodel2,)
 
 ```{r}
 
-data(QuickStartExample)
-x <- QuickStartExample$x
-y <- QuickStartExample$y
-
 train_m = data.matrix(train)
 #head(train_m[,3])
 fit <- glmnet(train_m[,3:12], train_m[,13])
@@ -428,10 +425,24 @@ plot(fit,label = TRUE)
 plot(fit$dev.ratio) # The fraction of (null) deviance explained (for "elnet", this is the R-square)
 fit$lambda[30]
 fit$df[30]
-coef(fit, s = 0.1)
+coef(fit, s = 0.5) # coeff with 50% sparsity. (I think). It shows 5 features and is confirmed on the plot that it is the features that break away from the middle line the fastest. 
+
+# wind + gender + ODJ + pressure + hum
+```
+
+Attempting to expand on the lasso part by running it with the mixed effects, not just the fixed effects to compare feature selection.
+
+```{r}
+
+
+#lm1 = glmmLasso(train[,13] ~ train[,10], rnd = list(subject=~1),
+#lambda=10, data = train)
+
 
 
 ```
+
+
 
 ### Intial lmer Models
 The first model uses as many inputs as it can without getting a singular error and a random effect from the subjects. Model 2, same as 1 but now random effect is location. Model 3 also R.E. is location but with less variables.
