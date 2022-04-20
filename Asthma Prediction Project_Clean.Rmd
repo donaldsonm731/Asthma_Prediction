@@ -161,10 +161,10 @@ groups <-        # Randomly assign train/test groups to all values of UserNo.
   distinct(UserNo.) %>%
   rowwise() %>%
   mutate(group = sample(
-    c("train", "test"),
+    c("train", "validation","test"),
     1,
     replace = TRUE,
-    prob = c(0.8, 0.2) 
+    prob = c(0.7, 0.1, 0.2) 
   ))
 
 groups
@@ -174,6 +174,7 @@ asthmaData <- asthmaData %>%
   left_join(groups)
 
 train = filter(asthmaData, group == "train")
+validation = filter(asthmaData, group == "validation")
 test = filter(asthmaData, group == "test")
 
 dim(train)
