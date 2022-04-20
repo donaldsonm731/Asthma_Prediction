@@ -3,9 +3,12 @@ title: "Asthma Attack Predictions"
 author: "Kadie Iverson & Matthew Donaldson"
 date: "2/8/2022"
 output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
---- 
+---
 title: "Asthma Attack Predictions"
 author: "Kadie Iverson & Matthew Donaldson"
 date: "2/8/2022"
@@ -32,40 +35,43 @@ library(glmmLasso)
                    #"vcd", "visreg", "MuMIn", "lmerTest", "shiny"))
 ```
 
+--\> how each subject rates their asthma --\> look at the type of
+factoring (maybe 0,1,2) --\> standardized after split into training
 
---> how each subject rates their asthma
---> look at the type of factoring (maybe 0,1,2)
---> standardized after split into training
+lmer: reaction \~ days + (days\|subject)
 
-lmer: reaction ~ days + (days|subject)
-
-generalized linear model
- - randomness within the variance of the error term
+generalized linear model - randomness within the variance of the error
+term
 
 TO DO:
-  
-- In lmerTest package function to use: step.lmerNodLmerTest() -> backward elimination of Rand/fixed effects
 
-- Also ANOVA() tests rand effects and drop1() tests fixed effects (f-test).
+-   In lmerTest package function to use: step.lmerNodLmerTest() -\>
+    backward elimination of Rand/fixed effects
 
-- Read panel data, (mixture model source)
+-   Also ANOVA() tests rand effects and drop1() tests fixed effects
+    (f-test).
 
-- make a decision on whether to have data from each participant or hold out on 2 participants
+-   Read panel data, (mixture model source)
 
-Sources:
-- Mixture model: https://lme4.r-forge.r-project.org/slides/2011-03-16-Amsterdam/2Longitudinal.pdf
-- Catet Package: https://topepo.github.io/caret/feature-selection-overview.html
-- Vraible selection: https://cran.r-project.org/web/packages/olsrr/vignettes/variable_selection.html
-- Boxplots: http://www.unige.ch/ses/sococ/cl/r/bapr.e.html
-- Regressing Cat. data: https://advstats.psychstat.org/book/mregression/catpredictor.php
-- Coding Cat. Data: https://stats.oarc.ucla.edu/r/modules/coding-for-categorical-variables-in-regression-models/
- 
+-   make a decision on whether to have data from each participant or
+    hold out on 2 participants
 
+Sources: - Mixture model:
+<https://lme4.r-forge.r-project.org/slides/2011-03-16-Amsterdam/2Longitudinal.pdf> -
+Catet Package:
+<https://topepo.github.io/caret/feature-selection-overview.html> -
+Vraible selection:
+<https://cran.r-project.org/web/packages/olsrr/vignettes/variable_selection.html> -
+Boxplots: <http://www.unige.ch/ses/sococ/cl/r/bapr.e.html> - Regressing
+Cat. data:
+<https://advstats.psychstat.org/book/mregression/catpredictor.php> -
+Coding Cat. Data:
+<https://stats.oarc.ucla.edu/r/modules/coding-for-categorical-variables-in-regression-models/>
 
- 
 # Practicum of Data Analytics Project
 
 ## Importing
+
 ```{r}
 asthmaDataOriginal= read.csv("Asthma_Data_File.csv")  # Importing the data set 
 
@@ -75,18 +81,19 @@ head(asthmaData)  #Looking at the first 6 entries
 dim(asthmaData)
 ```
 
-
 ### Data Description
 
-The first summary doesn't give us to much information because half the inputs are chr. So, before looking at the properties of each feature we need to convert the strings to integers.
+The first summary doesn't give us to much information because half the
+inputs are chr. So, before looking at the properties of each feature we
+need to convert the strings to integers.
 
 ```{r}
 # Summary gives a description for each input and output, giving you a sense of what the data looks like
 summary(asthmaData)
 ```
 
-Removing the subject number and all the non categorical data. Then factoring each input.
-Now there are levels for each categorical input.
+Removing the subject number and all the non categorical data. Then
+factoring each input. Now there are levels for each categorical input.
 
 ```{r}
 # Only want  to factor the categories so removing the columns listed below.
@@ -104,9 +111,8 @@ str(asthmaData)
 
 ```
 
+Bar plots and histograms give us an idea of the data in each category.
 
-
-Bar plots and histograms give us an idea of the data in each category. 
 ```{r}
 barplot(prop.table(table(asthmaData$UserNo.)), main = 'Subject')
 barplot(prop.table(table(asthmaData$Age)), main = 'Age')
@@ -123,7 +129,6 @@ hist(asthmaData$WindSpeed, breaks = 25, main = 'wind')
 hist(asthmaData$ACTScore,breaks = 17, main = 'ACT score')
 ```
 
-
 ```{r}
 table(asthmaData$Age) 
 table(asthmaData$Gender)
@@ -135,7 +140,8 @@ table(asthmaData$UVIndex)
 table(asthmaData$ACTScore)
 ```
 
-Looking at frequency and distribution of the ACT score that each user self reported.
+Looking at frequency and distribution of the ACT score that each user
+self reported.
 
 ```{r}
 jpeg(file="saving_plot1.jpeg") 
@@ -143,9 +149,6 @@ ggplot(asthmaData, aes(x = ACTScore)) +
   geom_histogram(fill = "white", colour = "black", bins = 20) +
   facet_grid(UserNo. ~ .)
 ```
-
-
-
 
 ## Splitting into Train & Test
 
@@ -214,9 +217,13 @@ test_wind = test$WindSpeed
 test_ACT = test$ACTScore
 ```
 
-
 ## Finding outliers in the categorical/numeric data
-To find outliers, we will have a box plot of each input that is categorical and put it against the inputs that are continuous.Finding the outliers using Boxplot (finds points outside 1.5*IQR), as well as to get a better understanding the distribution of the features a box plot was made. We do this for each, train and test, set.
+
+To find outliers, we will have a box plot of each input that is
+categorical and put it against the inputs that are continuous.Finding
+the outliers using Boxplot (finds points outside 1.5\*IQR), as well as
+to get a better understanding the distribution of the features a box
+plot was made. We do this for each, train and test, set.
 
 First plotting 1 categorical input at a time with temp humidity
 
@@ -245,7 +252,8 @@ totOutlier_H = c(outlier_ageH, outlier_genderH, outlier_smH, outlier_ODJH, outli
 table(totOutlier_H)
 ```
 
-Next plotting 1 cat. at a time with 
+Next plotting 1 cat. at a time with
+
 ```{r}
 ## NEED TO USE PACKAGE car for this to work because of the upper case B
 
@@ -271,6 +279,7 @@ table(totOutlier_T)
 ```
 
 lastly, plotting 1 cat at a time with windspeed
+
 ```{r}
 # This box and whisker plot created the boxplot and also labels the points that are 
 # 1.5 times outside the IQR, I then take those points, convert them from chr to
@@ -295,6 +304,7 @@ table(totOutlier_W)
 ```
 
 Looking at the total amount of outliers now:
+
 ```{r}
 totOutliers = c(totOutlier_H, totOutlier_T, totOutlier_W)
 #length(totOutliers)
@@ -318,6 +328,7 @@ length(unique(totOutliers))
 ```
 
 Check to see all inputs and categories are still represented
+
 ```{r}
 # Age group above 50 lost 23 instances, not sig. for the group
 # Males also lost 23 instances
@@ -340,9 +351,8 @@ table(asthmaData$ACTScore)
 
 ```
 
-
-
 ## Standardize Data set
+
 ```{r}
 ## standard normalize of continuous variable for mixture model.
 hum = scale(hum, scale = TRUE)
@@ -354,16 +364,9 @@ test_temp = scale(test_temp, scale = TRUE)
 test_wind = scale(test_wind, scale = TRUE)
 ```
 
-
-
-
-
-
-
 ## Mixted Effects Model
 
 ### Backward feature selection
-
 
 ```{r}
 backmodel1 <- lmer(ACT ~ wind + hum + gender + ODJ + ODA + pressure + uv + (1|subject) + (1|loc) + (0 + gender|subject) + (0 + gender|loc) + (0 + age|subject) + (0 + age|loc), data = train)
@@ -383,7 +386,6 @@ anova(final2)
 step_res2
 ```
 
-
 ```{r}
 backmodel3 <- lmer(ACT ~  wind + gender + ODJ + ODA + pressure + hum +  (1|subject) + (1|loc), data = train)
 
@@ -402,19 +404,14 @@ anova(final4)
 step_res4
 ```
 
-
-
-
-
 ## Predicting on Test set
+
 ```{r}
 
 predict = predict(backmodel2,)
 
 
 ```
-
-
 
 ## Testing lasso with model
 
@@ -450,46 +447,37 @@ cv.glmnet(train_m[,3:12], train_m[,13])
 
 
 
-
-Attempting to expand on the lasso part by running it with the mixed effects, not just the fixed effects to compare feature selection.
+Attempting to expand on the lasso part by running it with the mixed
+effects, not just the fixed effects to compare feature selection.
 
 ```{r}
 #set lambdas... go from 0 to 10^5, in 10 log steps
-lambda <- 10^seq(-3,5, length=10)
+lambda <- 10^seq(-3,1, length=10)
 BIC_vec <- rep(Inf, length(lambda))
 AIC_vec <- rep(Inf, length(lambda))
 Devianz_ma<-NULL
 Coeff_ma<-NULL
 
+# The for loop tests the different lambda values and records the BIC number.
+# This is hypertuning the parameter lambda through
+for (j in 1:10)
+  {
+    print(paste("Iteration ", j, sep=""))
 
-glm1 =  try(glmmLasso(ACTScore~ WindSpeed + Temperature + as.factor(Gender) + as.factor(Pressure) + as.factor(UVIndex) + as.factor(Age) + as.factor(SmokingHabit) + as.factor(OutdoorJob) +  Humidity,rnd = list(UserNo.=~1,Location=~ 1), lambda=0.001, data = train,switch.NR = TRUE,
- final.re = TRUE))
-# code to make it continue anyway if an error occurs
- #if(class(glm1)!="try-error")
- #{
- 
- #save BIC, AIC
- BIC_vec[j]<-glm1$bic
- AIC_vec[j]<-glm1$aic
- 
- #save coefficient outputs
- Coeff_ma<-cbind(Coeff_ma,glm1$coefficients)
- 
- #save error (deviance) values
- y.hat<-predict(glm1,train)
- #Devianz_ma[j]<-sum(family$dev.resids(NP_P600_EightElectrodeROI$Amplitude,y.hat,wt=rep(1,length(y.hat))))
- 
+glm1 =  try(glmmLasso(ACTScore~ WindSpeed + Temperature + as.factor(Gender) + as.factor(Pressure) + as.factor(UVIndex) + as.factor(Age) + as.factor(SmokingHabit) + as.factor(OutdoorJob) +  Humidity,rnd = list(UserNo.=~1,Location=~ 1), lambda=lambda[j], data = train, switch.NR = TRUE,final.re = TRUE))
 
-#}
-)
-#summary(lm1)
-
-
+# Save BIC number 
+if(class(glm1)!="try-error")
+      {  
+      BIC_vec[j]<-glm1$bic
+      }
+  }
 
 ```
 
 ```{r}
 BIC_vec
+which.min(BIC_vec)
 lambda[which.min(BIC_vec)]
 
 ```
@@ -497,21 +485,21 @@ lambda[which.min(BIC_vec)]
 ```{r}
 
 
-model = glmmLasso(ACTScore~ WindSpeed + Temperature + as.factor(Gender) + as.factor(Pressure) + as.factor(UVIndex) + as.factor(Age) + as.factor(SmokingHabit) + as.factor(OutdoorJob) +  Humidity,rnd = list(UserNo.=~1,Location=~ 1), lambda = 0.001, data = train,switch.NR = TRUE,
+model = glmmLasso(ACTScore~ WindSpeed + Temperature + as.factor(Gender) + as.factor(Pressure) + as.factor(UVIndex) + as.factor(Age) + as.factor(SmokingHabit) + as.factor(OutdoorJob) +  Humidity,rnd = list(UserNo.=~1,Location=~ 1), lambda = 0.4641589, data = train,switch.NR = TRUE,
  final.re = TRUE)
 
 summary(model)
 
 ```
 
+
+
 ```{r}
 model$bic
 model$aic
-model$coefficients
+model$ranef
+model$ranerror
 ```
-
-
-
 
 ```{r}
 
@@ -525,12 +513,15 @@ confint(best_model)
 
 ```
 
-
-
 ### Intial lmer Models
-The first model uses as many inputs as it can without getting a singular error and a random effect from the subjects. Model 2, same as 1 but now random effect is location. Model 3 also R.E. is location but with less variables.
+
+The first model uses as many inputs as it can without getting a singular
+error and a random effect from the subjects. Model 2, same as 1 but now
+random effect is location. Model 3 also R.E. is location but with less
+variables.
 
 The anova table below shows use which model is most significant.
+
 ```{r}
 # Conditional means of the random effects
 model1 = glm(ACT ~ 1, data = train)
@@ -546,8 +537,4 @@ AIC(model4)
 AIC(final2)
 AIC(backmodel4)
 ```
-
-
-
-
 
