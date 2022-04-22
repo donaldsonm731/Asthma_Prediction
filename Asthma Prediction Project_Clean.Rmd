@@ -360,6 +360,10 @@ hum = scale(hum, scale = TRUE)
 temp = scale(temp, scale = TRUE)
 wind = scale(wind, scale = TRUE)
 
+hum = scale(validation$Humidity, scale = TRUE)
+temp = scale(validation$Temperature, scale = TRUE)
+wind = scale(validation$WindSpeed, scale = TRUE)
+
 test_hum = scale(test_hum, scale = TRUE)
 test_temp = scale(test_temp, scale = TRUE)
 test_wind = scale(test_wind, scale = TRUE)
@@ -370,7 +374,7 @@ test_wind = scale(test_wind, scale = TRUE)
 ### Backward feature selection
 
 ```{r}
-backmodel1 <- lmer(ACT ~ wind + hum + gender + ODJ + ODA + pressure + uv + (1|subject) + (1|loc) + (0 + gender|subject) + (0 + gender|loc) + (0 + age|subject) + (0 + age|loc), data = train)
+backmodel1 <- lmer(ACT ~ train$WindSpeed + hum + gender + ODJ + ODA + pressure + uv + (1|subject) + (1|loc) + (0 + gender|subject) + (0 + gender|loc) + (0 + age|subject) + (0 + age|loc), data = train)
 
 step_res1 <- step(backmodel1)
 final1 <- get_model(step_res1)
