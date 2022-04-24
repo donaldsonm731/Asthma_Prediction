@@ -302,7 +302,7 @@ outlier_UVW = as.numeric(Boxplot(wind~uv))
 totOutlier_W = c(outlier_ageW, outlier_genderW, outlier_smW, outlier_ODJW, outlier_ODAW,outlier_pW, outlier_UVW)
 table(totOutlier_W)
 
-```
+
 
 Looking at the total amount of outliers now:
 
@@ -374,90 +374,51 @@ test_wind = scale(test_wind, scale = TRUE)
 ### Backward feature selection
 
 ```{r}
-backmodel1 <- lmer(ACT ~ train$WindSpeed + hum + gender + ODJ + ODA + pressure + uv + (1|subject) + (1|loc) + (0 + gender|subject) + (0 + gender|loc) + (0 + age|subject) + (0 + age|loc), data = train)
+
+backmodel1 <- lmer(ACT ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
 
 step_res1 <- step(backmodel1)
 final1 <- get_model(step_res1)
 anova(final1)
 step_res1
+
 ```
 
 ```{r}
-backmodel2 <- lmer(ACT ~  wind + temp + hum + gender + age + ODJ + ODA + smoking +  pressure + uv + (1|subject) + (1|loc) + (0 + gender|subject) + (0 + gender|loc) + (0 + age|subject) + (0 + age|loc), data = train)
+#backmodel2 <- lmer(ACT ~  wind + temp + hum + gender + age + ODJ + ODA + smoking +  pressure + uv + (1|subject) + (1|loc) + (0 + gender|subject) + (0 + gender|loc) + (0 + age|subject) + (0 + age|loc), data = train)
 
-step_res2 <- step(backmodel2)
-final2 <- get_model(step_res2)
-anova(final2)
-step_res2
+#step_res2 <- step(backmodel2)
+#final2 <- get_model(step_res2)
+#anova(final2)
+#step_res2
 ```
 
 ```{r}
-backmodel3 <- lmer(ACT ~  wind + gender + ODJ + ODA + pressure + hum +  (1|subject) + (1|loc), data = train)
+#backmodel3 <- lmer(ACT ~  wind + gender + ODJ + ODA + pressure + hum +  (1|subject) + (1|loc), data = train)
 
-step_res3 <- step(backmodel3)
-final3 <- get_model(step_res3)
-anova(final3)
-step_res3
+#step_res3 <- step(backmodel3)
+#final3 <- get_model(step_res3)
+#anova(final3)
+#step_res3
 ```
 
 ```{r}
-backmodel4 <- lmer(ACT ~  wind + gender + ODJ  + pressure + hum +  (1|subject), data = train)
+#backmodel4 <- lmer(ACT ~  wind + gender + ODJ  + pressure + hum +  (1|subject), data = train)
 
-step_res4 <- step(backmodel4)
-final4 <- get_model(step_res4)
-anova(final4)
-step_res4
+#step_res4 <- step(backmodel4)
+#final4 <- get_model(step_res4)
+#anova(final4)
+#step_res4
 ```
 
-## Predicting on Test set
 
-```{r}
-
-predict = predict(backmodel2,)
-
-
-```
 
 ## Testing lasso with model
 
-```{r}
-
-train_m = data.matrix(train)
-#head(train_m[,3])
-fit <- glmnet(train_m[,3:12], train_m[,13])
-
-plot(fit,label = TRUE)
-
-#fit$a0
-plot(fit$dev.ratio) # The fraction of (null) deviance explained (for "elnet", this is the R-square)
-#fit$dev.ratio
-i = 20
-fit$lambda[i]
-fit$dev.ratio[i]
-points(i,fit$dev.ratio[i], pch = 19,col = 'red')
-fit$df[i]
-coef(fit, s = fit$lambda[i]) # coeff with 50% sparsity. (I think). It shows 5 features and is confirmed on the plot that it is the features that break away from the middle line the fastest. 
-
-assess = assess.glmnet(fit, newx = train_m[,3:12 ], newy = train_m[,13])
-
-plot(assess$mse)
-points(i,assess$mse[i], pch = 19, col = 'red')
-plot(assess$mae)
-points(i,assess$mae[i], pch = 19, col = 'red')
-cv.glmnet(train_m[,3:12], train_m[,13])
-
-
-# wind + gender + ODJ + pressure + hum
-```
-
-
-
-Attempting to expand on the lasso part by running it with the mixed
-effects, not just the fixed effects to compare feature selection.
 
 ```{r}
 #set lambdas... go from 0 to 10^5, in 10 log steps
-lambda <- 10^seq(-3,1, length=10)
+lambda <- seq(0.01,5, length = 100)
 BIC_vec <- rep(Inf, length(lambda))
 AIC_vec <- rep(Inf, length(lambda))
 Devianz_ma<-NULL
@@ -469,7 +430,7 @@ for (j in 1:10)
   {
     print(paste("Iteration ", j, sep=""))
 
-glm1 =  try(glmmLasso(ACTScore~ WindSpeed + Temperature + as.factor(Gender) + as.factor(Pressure) + as.factor(UVIndex) + as.factor(Age) + as.factor(SmokingHabit) + as.factor(OutdoorJob) +  Humidity,rnd = list(UserNo.=~1,Location=~ 1), lambda=lambda[j], data = train, switch.NR = TRUE,final.re = TRUE))
+glm1 =  try(glmmLasso(ACTScore~ WindSpeed + Temperature + as.factor(Gender) + as.factor(Pressure) + as.factor(UVIndex) + as.factor(Age)  + as.factor(OutdoorJob) +  Humidity,rnd = list(UserNo.=~1,Location=~ 1), lambda=lambda[j], data = train, switch.NR = TRUE,final.re = TRUE))
 
 # Save BIC number 
 if(class(glm1)!="try-error")
@@ -485,61 +446,102 @@ BIC_vec
 which.min(BIC_vec)
 lambda[which.min(BIC_vec)]
 
+
 ```
 
 ```{r}
 
 
-model = glmmLasso(ACTScore~ WindSpeed + Temperature + as.factor(Gender) + as.factor(Pressure) + as.factor(UVIndex) + as.factor(Age) + as.factor(SmokingHabit) + as.factor(OutdoorJob) +  Humidity,rnd = list(UserNo.=~1,Location=~ 1), lambda = 0.4641589, data = train,switch.NR = TRUE,
- final.re = TRUE)
+model_l = glmmLasso(ACTScore~ WindSpeed + Humidity + Temperature + as.factor(Gender) + as.factor(OutdoorJob) + as.factor(Pressure) + as.factor(Age) + as.factor(UVIndex),rnd = list(UserNo.=~1,Location=~ 1), lambda = 0.4132323, data = train,switch.NR = TRUE,final.re = TRUE)
 
-summary(model)
+#0.4641589
+summary(model_l)
 
 ```
 
 
 
 ```{r}
-model$bic
-model$aic
-model$ranef
-model$ranerror
+
+model_l$bic
+model_l$aic
+model_l$ranef
+model_l$ranerror # WHAT IS THIS???
+
 ```
+
 
 ```{r}
 
+model_sb = lm(ACT ~ WindSpeed + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex, data =train)
+#summary(model_sb)
 
-best_model = lm(ACT~ hum + wind + gender + uv)
-summary(best_model)
+#summary(model_l)
 
-confint(best_model)
-
-
+model3 = glmm(ACT~ WindSpeed + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.), data = train)
 
 ```
 
-### Intial lmer Models
 
-The first model uses as many inputs as it can without getting a singular
-error and a random effect from the subjects. Model 2, same as 1 but now
-random effect is location. Model 3 also R.E. is location but with less
-variables.
 
-The anova table below shows use which model is most significant.
-
+# Predicting on validation set
 ```{r}
-# Conditional means of the random effects
-model1 = glm(ACT ~ 1, data = train)
-model2 = lmer(ACT ~ (1|subject), data = train )
-model3 = lmer(ACT ~ (1|loc), data = train)
-model4 = lmer(ACT ~ (1|subject) + (1| loc), data = train)
 
-AIC(model1)
-AIC(model2)
-AIC(model3)
-AIC(model4)
 
-AIC(final2)
-AIC(backmodel4)
+pred_l = predict(model_l, validation, interval="predict") 
+error_l = round(pred_l) - validation$ACTScore
+#error_l
+
+pred_sb = predict(model_sb, validation, interval='predict')
+#pred_sb
+error_sb =  round(pred_sb[,1]) - validation$ACTScore
+#error_sb
+
+#pred_3 =  predict(model3, validation, interval='predict')
+#error_3 =  round(pred_3[,1]) - validation$ACTScore
+
+
+data.frame(R2 = R2(pred_l, validation $ ACTScore),
+           RMSE = RMSE(pred_l, validation $ ACTScore), 
+           MAE = MAE(pred_l, validation $ ACTScore))
+
+data.frame(R2 = R2(pred_sb, validation $ ACTScore), 
+           RMSE = RMSE(pred_sb, validation $ ACTScore), 
+           MAE = MAE(pred_sb, validation $ ACTScore))
+
+#data.frame(R2 = R2(pred_3, validation $ ACTScore), 
+#           RMSE = RMSE(pred_3, validation $ ACTScore), 
+#           MAE = MAE(pred_3, validation $ ACTScore))
+
+
+
 ```
+
+
+# Generaliation to test set
+```{r}
+
+BestModel = predict(model_l, test, interval="predict") 
+error_l = round(BestModel) - test$ACTScore
+
+data.frame(R2 = R2(BestModel, test $ ACTScore),
+           RMSE = RMSE(BestModel, test $ ACTScore), 
+           MAE = MAE(BestModel, test $ ACTScore))
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
