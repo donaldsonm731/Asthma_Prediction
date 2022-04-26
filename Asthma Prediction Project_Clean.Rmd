@@ -28,6 +28,7 @@ library(groupdata2)
 library(lmerTest)
 library(glmnet)
 library(glmmLasso)
+library(boot)
 
 #install.packages(c("boot", "car", "caret", "tidyverse",  "effects", "foreign", 
                    #"Hmisc", "DT", "knitr", "lme4", "MASS", "mlogit", "msm", 
@@ -111,6 +112,10 @@ str(asthmaData)
 
 ```
 
+
+
+
+
 Bar plots and histograms give us an idea of the data in each category.
 
 ```{r}
@@ -161,10 +166,10 @@ groups <-        # Randomly assign train/test groups to all values of UserNo.
   distinct(UserNo.) %>%
   rowwise() %>%
   mutate(group = sample(
-    c("train", "validation","test"),
+    c("train", "test"),
     1,
     replace = TRUE,
-    prob = c(0.7, 0.1, 0.2) 
+    prob = c(0.8, 0.2) 
   ))
 
 groups
@@ -356,17 +361,13 @@ table(train$UserNo.)
 
 ```{r}
 ## standard normalize of continuous variable for mixture model.
-hum = scale(hum, scale = TRUE)
-temp = scale(temp, scale = TRUE)
-wind = scale(wind, scale = TRUE)
+train$Humidity = scale(train$Humidity, scale = TRUE)
+train$Temperature = scale(train$Temperature, scale = TRUE)
+train$WindSpeed = scale(train$WindSpeed, scale = TRUE)
 
-hum = scale(validation$Humidity, scale = TRUE)
-temp = scale(validation$Temperature, scale = TRUE)
-wind = scale(validation$WindSpeed, scale = TRUE)
-
-test_hum = scale(test_hum, scale = TRUE)
-test_temp = scale(test_temp, scale = TRUE)
-test_wind = scale(test_wind, scale = TRUE)
+test$Humidity = scale(test$Humidity, scale = TRUE)
+test$Temperature = scale(test$Temperature, scale = TRUE)
+test$WindSpeed = scale(test$WindSpeed, scale = TRUE)
 ```
 
 ## Mixted Effects Model
@@ -374,14 +375,12 @@ test_wind = scale(test_wind, scale = TRUE)
 ### Backward feature selection
 
 ```{r}
-
-backmodel1 <- lmer(ACT ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
+backmodel1 <- lmer(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
 
 step_res1 <- step(backmodel1)
 final1 <- get_model(step_res1)
 anova(final1)
 step_res1
-
 ```
 
 ```{r}
@@ -442,78 +441,103 @@ if(class(glm1)!="try-error")
 ```
 
 ```{r}
-BIC_vec
 which.min(BIC_vec)
 lambda[which.min(BIC_vec)]
-
-
 ```
 
 ```{r}
-
-
-model_l = glmmLasso(ACTScore~ WindSpeed + Humidity + Temperature + as.factor(Gender) + as.factor(OutdoorJob) + as.factor(Pressure) + as.factor(Age) + as.factor(UVIndex),rnd = list(UserNo.=~1,Location=~ 1), lambda = 0.4132323, data = train,switch.NR = TRUE,final.re = TRUE)
+model_l = glmmLasso(ACTScore~ WindSpeed + Humidity + Temperature + as.factor(Gender) + as.factor(OutdoorJob) + as.factor(Pressure) + as.factor(Age) + as.factor(UVIndex),rnd = list(UserNo.=~1,Location=~ 1), lambda = 0.06040404, data = train,switch.NR = TRUE,final.re = TRUE)
   
-summary(model_l)
+#0.4132323
 
+summary(model_l)
 ```
 
 
 
 ```{r}
-
 model_l$bic
 model_l$aic
 model_l$ranef
 model_l$ranerror # WHAT IS THIS???
-
 ```
 
 
 ```{r}
-
-model_sb = lm(ACT ~ WindSpeed + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex, data =train)
-#summary(model_sb)
-
+model_sb = lm(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex, data = train)
 #summary(model_l)
+```
 
-model3 = glmm(ACT~ WindSpeed + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.), data = train)
 
+## Bootstrapping
+
+```{r}
+
+train1 <- train[(train$UserNo.!= 9),] 
+train2 <- train[(train$UserNo.!= 7),] 
+train3 <- train[(train$UserNo.!= 6),] 
+train4 <- train[(train$UserNo.!= 5),] 
+train5 <- train[(train$UserNo.!= 3),] 
+train6 <- train[(train$UserNo.!= 2),] 
+train7 <- train[(train$UserNo.!= 1),] 
+
+training <- list(train1,train2,train3,train4,train5,train6,train7)
+
+set.seed(23)
+train_control <- trainControl(method = "LOOCV")
+model <- train(ACTScore ~., data = train,
+               method = "lm",
+               trControl = train_control)
+print(model)
+```
+
+```{r}
+
+
+rsq <- function(formula, data, indices) {
+  d <- data[indices,]
+  fit <- lm(formula, data=d)
+  return(summary(fit)$r.squared)
+}
+
+rs <- vector()
+j <- 1
+
+#for (i in 1:7) {
+#  results <- boot(data = train, statistic = rsq, R = 400, formula = ACTScore ~ WindSpeed + Humidity + as.factor(Gender) + as.factor(OutdoorJob) + #as.factor(OutdoorActivities) + as.factor(Pressure) + as.factor(UVIndex))
+  
+# print(i)
+  #rs[j] <- results$t0
+  #j <- j+1
+#}
+
+#rs
+```
+
+
+```{r}
+plot(results)
 ```
 
 
 
 # Predicting on validation set
 ```{r}
-
-
-pred_l = predict(model_l, validation, interval="predict") 
-error_l = round(pred_l) - validation$ACTScore
+#pred_l = predict(model_l, validation, interval="predict") 
+#error_l = round(pred_l) - validation$ACTScore
 #error_l
 
-pred_sb = predict(model_sb, validation, interval='predict')
-#pred_sb
-error_sb =  round(pred_sb[,1]) - validation$ACTScore
+#pred_sb = predict(model_sb, validation, interval='predict')
+#error_sb =  round(pred_sb[,1]) - validation$ACTScore
 #error_sb
 
-#pred_3 =  predict(model3, validation, interval='predict')
-#error_3 =  round(pred_3[,1]) - validation$ACTScore
+#data.frame(R2 = R2(pred_l, validation $ ACTScore),
+#           RMSE = RMSE(pred_l, validation $ ACTScore), 
+#           MAE = MAE(pred_l, validation $ ACTScore))
 
-
-data.frame(R2 = R2(pred_l, validation $ ACTScore),
-           RMSE = RMSE(pred_l, validation $ ACTScore), 
-           MAE = MAE(pred_l, validation $ ACTScore))
-
-data.frame(R2 = R2(pred_sb, validation $ ACTScore), 
-           RMSE = RMSE(pred_sb, validation $ ACTScore), 
-           MAE = MAE(pred_sb, validation $ ACTScore))
-
-#data.frame(R2 = R2(pred_3, validation $ ACTScore), 
-#           RMSE = RMSE(pred_3, validation $ ACTScore), 
-#           MAE = MAE(pred_3, validation $ ACTScore))
-
-
-
+#data.frame(R2 = R2(pred_sb, validation $ ACTScore), 
+#           RMSE = RMSE(pred_sb, validation $ ACTScore), 
+#           MAE = MAE(pred_sb, validation $ ACTScore))
 ```
 
 
@@ -526,10 +550,6 @@ error_l = round(BestModel) - test$ACTScore
 data.frame(R2 = R2(BestModel, test $ ACTScore),
            RMSE = RMSE(BestModel, test $ ACTScore), 
            MAE = MAE(BestModel, test $ ACTScore))
-
-
-
-
 ```
 
 
