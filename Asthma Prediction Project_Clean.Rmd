@@ -179,7 +179,7 @@ asthmaData <- asthmaData %>%
   left_join(groups)
 
 train = filter(asthmaData, group == "train")
-validation = filter(asthmaData, group == "validation")
+#validation = filter(asthmaData, group == "validation")
 test = filter(asthmaData, group == "test")
 
 dim(train)
@@ -328,8 +328,7 @@ if(dim(train)[1] == 757){
 dim(asthmaData)
 dim(test)
 dim(train)
-length(repOutliers)
-length(unique(totOutliers))
+
 ```
 
 Check to see all inputs and categories are still represented
@@ -375,12 +374,14 @@ test$WindSpeed = scale(test$WindSpeed, scale = TRUE)
 ### Backward feature selection
 
 ```{r}
+
 backmodel1 <- lmer(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
 
 step_res1 <- step(backmodel1)
 final1 <- get_model(step_res1)
 anova(final1)
 step_res1
+
 ```
 
 ```{r}
@@ -441,8 +442,10 @@ if(class(glm1)!="try-error")
 ```
 
 ```{r}
+
 which.min(BIC_vec)
 lambda[which.min(BIC_vec)]
+
 ```
 
 ```{r}
@@ -472,23 +475,21 @@ model_sb = lm(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + OutdoorAct
 ## Bootstrapping
 
 ```{r}
-
-train1 <- train[(train$UserNo.!= 9),] 
-train2 <- train[(train$UserNo.!= 7),] 
-train3 <- train[(train$UserNo.!= 6),] 
-train4 <- train[(train$UserNo.!= 5),] 
-train5 <- train[(train$UserNo.!= 3),] 
-train6 <- train[(train$UserNo.!= 2),] 
-train7 <- train[(train$UserNo.!= 1),] 
-
-training <- list(train1,train2,train3,train4,train5,train6,train7)
-
 set.seed(23)
-train_control <- trainControl(method = "LOOCV")
-model <- train(ACTScore ~., data = train,
-               method = "lm",
-               trControl = train_control)
-print(model)
+
+folds <- groupKFold(train$UserNo., k = 7) 
+
+train_control <- trainControl(method = "LOOCV", index = folds)
+
+model1 <- train(ACTScore ~ Gender + WindSpeed + Temperature + Age + Humidity + UVIndex, data = train, method = "lm", trControl = train_control)
+
+model2 <- train(ACTScore ~ Gender + WindSpeed + Temperature + Age + Humidity + UVIndex + OutdoorJob + OutdoorActivities + Pressure, data = train, method = "glmnet", trControl = train_control)
+
+model3 <- train(ACTScore ~ Gender + WindSpeed + Temperature + Age + Humidity + UVIndex + OutdoorJob + OutdoorActivities + Pressure, data = train, method = , trControl = train_control)
+
+
+#summary(model1)
+#model2$results
 ```
 
 ```{r}
