@@ -450,7 +450,7 @@ lambda[which.min(BIC_vec)]
 
 ```{r}
 model_l = glmmLasso(ACTScore~ WindSpeed + Humidity + Temperature + as.factor(Gender) + as.factor(OutdoorJob) + as.factor(Pressure) + as.factor(Age) + as.factor(UVIndex),rnd = list(UserNo.=~1,Location=~ 1), lambda = 0.06040404, data = train,switch.NR = TRUE,final.re = TRUE)
-  
+# https://www.aggieerin.com/post/lasso-myself-numbers/
 #0.4132323
 
 summary(model_l)
@@ -462,7 +462,7 @@ summary(model_l)
 model_l$bic
 model_l$aic
 model_l$ranef
-model_l$ranerror # WHAT IS THIS???
+model_l$ranerror 
 ```
 
 
@@ -475,21 +475,39 @@ model_sb = lm(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + OutdoorAct
 ## Bootstrapping
 
 ```{r}
+
+set.seed(9560)
+up_train <- upSample(x = train[, -ncol(train)],
+                     y = train$UserNo.)                         
+table(up_train$Class) 
+
+```
+
+
+```{r}
 set.seed(23)
 
-folds <- groupKFold(train$UserNo., k = 7) 
+folds <- groupKFold(up_train$UserNo., k = 7) 
 
+#head(up_train[,-ncol(up_train)])
 train_control <- trainControl(method = "LOOCV", index = folds)
 
-model1 <- train(ACTScore ~ Gender + WindSpeed + Temperature + Age + Humidity + UVIndex, data = train, method = "lm", trControl = train_control)
+model1 <- train(ACTScore ~ Gender + WindSpeed + Temperature + Age + Humidity + UVIndex + OutdoorJob + OutdoorActivities + Pressure, data = up_train[,-ncol(up_train)], method = "lm", trControl = train_control)
 
-model2 <- train(ACTScore ~ Gender + WindSpeed + Temperature + Age + Humidity + UVIndex + OutdoorJob + OutdoorActivities + Pressure, data = train, method = "glmnet", trControl = train_control)
-
-model3 <- train(ACTScore ~ Gender + WindSpeed + Temperature + Age + Humidity + UVIndex + OutdoorJob + OutdoorActivities + Pressure, data = train, method = , trControl = train_control)
+model2 <- train(ACTScore ~ WindSpeed + Humidity + Pressure + UVIndex, data = up_train[,-ncol(up_train)], method = "lm", trControl = train_control)
 
 
-#summary(model1)
+```
+
+
+```{r}
+#model1$results
+#model1$finalModel
+
 #model2$results
+#model2$finalModel
+summary(model1)
+summary(model2)
 ```
 
 ```{r}
