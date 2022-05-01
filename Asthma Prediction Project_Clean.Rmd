@@ -336,35 +336,11 @@ if(dim(train)[1] == 757){
 }
 # Visual help that outliers are only removed once
 dim(asthmaData)
-dim(test)
 dim(train)
+length(repOutliers)
 
 ```
 
-Check to see all inputs and categories are still represented
-
-```{r}
-# Age group above 50 lost 23 instances, not sig. for the group
-# Males also lost 23 instances
-# ODJ: Occationally lost 23 instances
-# Extremely likely : lost 23 instances
-# No smoking lost 23 instances
-# Pressure 1007 lost 6 instances, 1008 lost 4,  1009 lost 2, 1010 lost 5
-#            1011 lost 4, 1012 and 1013 lost 1 each (totalign 23 instances)
-#UVindex: extreme lost 2 and the low lost 21.
-
-## All in all, no group was lost or severly minimized during this process
-table(asthmaData$Age) 
-table(asthmaData$Gender)
-table(asthmaData$OutdoorJob)
-table(asthmaData$OutdoorActivities)
-table(asthmaData$SmokingHabit)
-table(asthmaData$Pressure)
-table(asthmaData$UVIndex)
-table(asthmaData$ACTScore)
-
-table(train$UserNo.)
-```
 
 ## Standardize Data set
 
@@ -380,90 +356,58 @@ test$WindSpeed = scale(test$WindSpeed, scale = TRUE)
 ```
 
 
-## Bootstrapping
-
-```{r}
-# Ch. 11.1 - upsample 
-set.seed(9560)
-up_train <- upSample(x = train[, -ncol(train)],
-                     y = train$UserNo.)                         
-table(up_train$Class) 
-
-```
-
-## Mixted Effects Model
+## Models
 
 ### Backward feature selection
 
 ```{r}
 
-backmodel1 <- lmer(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = up_train)
 
-step_res1 <- step(backmodel1)
+backmodel1 <- lmerTest::lmer(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
+
+step_res1 <- lmerTest::step(backmodel1)
 final1 <- get_model(step_res1)
 anova(final1)
 step_res1
 
-```
 
-```{r}
-#backmodel2 <- lmer(ACT ~  wind + temp + hum + gender + age + ODJ + ODA + smoking +  pressure + uv + (1|subject) + (1|loc) + (0 + gender|subject) + (0 + gender|loc) + (0 + age|subject) + (0 + age|loc), data = train)
-
-#step_res2 <- step(backmodel2)
-#final2 <- get_model(step_res2)
-#anova(final2)
-#step_res2
-```
-
-```{r}
-#backmodel3 <- lmer(ACT ~  wind + gender + ODJ + ODA + pressure + hum +  (1|subject) + (1|loc), data = train)
-
-#step_res3 <- step(backmodel3)
-#final3 <- get_model(step_res3)
-#anova(final3)
-#step_res3
-```
-
-```{r}
-#backmodel4 <- lmer(ACT ~  wind + gender + ODJ  + pressure + hum +  (1|subject), data = train)
-
-#step_res4 <- step(backmodel4)
-#final4 <- get_model(step_res4)
-#anova(final4)
-#step_res4
 ```
 
 
 
 ## Testing lasso with model
 
-
 ```{r}
 #set lambdas... go from 0 to 10^5, in 10 log steps
-lambda <- seq(0.0001,0.5, length = 100)
+lambda <- seq(0.001,1, length = 20)
 BIC_vec <- rep(Inf, length(lambda))
 AIC_vec <- rep(Inf, length(lambda))
-Devianz_ma<-NULL
-Coeff_ma<-NULL
+
 
 # The for loop tests the different lambda values and records the BIC number.
 # This is hypertuning the parameter lambda through
-for (j in 1:10)
+for (j in 1:20)
   {
     print(paste("Iteration ", j, sep=""))
 
-glm1 =  try(glmmLasso(ACTScore~ WindSpeed + Temperature + as.factor(Gender) + as.factor(Pressure) + as.factor(UVIndex) + as.factor(Age)  + as.factor(OutdoorJob) +  Humidity,rnd = list(UserNo.=~1,Location=~ 1), lambda=lambda[j], data = up_train, switch.NR = TRUE,final.re = TRUE))
+glm1 =  try(glmmLasso(ACTScore~ WindSpeed + Temperature + as.factor(Gender) + as.factor(Pressure) + as.factor(UVIndex) + as.factor(Age)  + as.factor(OutdoorJob) +  Humidity,rnd = list(UserNo.=~1,Location=~ 1), lambda=lambda[j], data = train, switch.NR = TRUE,final.re = TRUE))
 
 # Save BIC number 
 if(class(glm1)!="try-error")
       {  
       BIC_vec[j]<-glm1$bic
+      AIC_vec[j] = glm1$aic
+    
       }
   }
 
 ```
 
+
+
 ```{r}
+plot(BIC_vec)
+plot(AIC_vec)
 
 which.min(BIC_vec)
 lambda[which.min(BIC_vec)]
@@ -471,19 +415,19 @@ lambda[which.min(BIC_vec)]
 ```
 
 ```{r}
-model_l = glmmLasso(ACTScore~ WindSpeed + Humidity + Temperature + as.factor(Gender) + as.factor(OutdoorJob) + as.factor(Pressure) + as.factor(Age) + as.factor(UVIndex),rnd = list(UserNo.=~1 ,Location=~ 1), lambda = 0.01524848, data = train,switch.NR = TRUE,final.re = TRUE)
+model2 = glmmLasso(ACTScore~ WindSpeed + Humidity + Temperature + as.factor(Gender) + as.factor(OutdoorJob) + as.factor(Pressure) + as.factor(Age) + as.factor(UVIndex),rnd = list(UserNo.=~1 ,Location=~ 1), lambda = 0.1061579, data = train,switch.NR = TRUE,final.re = TRUE)
+
 # https://www.aggieerin.com/post/lasso-myself-numbers/
 #0.4132323
 
-summary(model_l)
+summary(model2)
 ```
-
 
 
 ```{r}
 #model_l$bic
 #model_l$aic
-model_l$ranef
+model2$ranef
 
 ```
 
@@ -493,63 +437,50 @@ So we try fitting with a linear model.
 
 
 
-
 ```{r}
-library(arm)
-# Chapter 4
-set.seed(23)
+library(emdi)
+n = dim(train)[1]
+backmodel2 <- lm(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex, data = train)
 
-folds <- groupKFold(up_train$UserNo., k = 7) 
+step_res2 <- step(backmodel2, criteria = "BIC")
+#final2 <- get_model(step_res2)
+#anova(final2)
+#step_res2$model
 
-# Chapter 5
-train_control <- trainControl(method = "LOOCV", index = folds)
 
-model1 <- train(ACTScore ~ Gender + WindSpeed + Temperature + Age + Humidity + UVIndex + OutdoorJob + OutdoorActivities + Pressure, data = up_train[,-ncol(up_train)], method = "lm", trControl = train_control)
+summary(step_res2)
+step_res2$anova
 
-model2 <- train(ACTScore ~ WindSpeed + Humidity + Pressure + UVIndex, data = up_train[,-ncol(up_train)], method = "lm", trControl = train_control)
-
-#model3 <- train(ACTScore ~ Gender + WindSpeed + Temperature + Age + Humidity + UVIndex + OutdoorJob + OutdoorActivities + Pressure, data = up_train[,-ncol(up_train)], method = "'bayesglm'", trControl = train_control) # Package: arm
-# Bayesian regression, idea from: https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-021-01704-6
+model3 = lm(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + OutdoorJob + 
+    Pressure + UVIndex, data = train)
 ```
 
 
-```{r}
-#model1$results
-#model1$finalModel
-
-#model2$results
-#model2$finalModel
-summary(model1)
-summary(model2)
-```
+## LASSO with out random effects
 
 ```{r}
 
+'%ni%' = Negate('%in%')
+x = data.matrix(train[,c('Humidity', 'Temperature', 'Pressure', 'Age', 'Gender', 'UVIndex', 'OutdoorJob', 'OutdoorActivities', 'SmokingHabit', 'WindSpeed')])
+y = train[,'ACTScore']
+cv.lasso = cv.glmnet(x,y,alpha=1)
+cv.lasso$lambda.min # optimal penalty parameter
+cv.lasso$lambda.1se
+plot(cv.lasso)
 
-rsq <- function(formula, data, indices) {
-  d <- data[indices,]
-  fit <- lm(formula, data=d)
-  return(summary(fit)$r.squared)
-}
+c = coef(cv.lasso, s = 'lambda.min', exact = TRUE)
+inds = which(c!=0)
+variables  = row.names(c)[inds]
+variables = variables[variables %ni% '(Intercept)']
+variables
 
-rs <- vector()
-j <- 1
+model4 = glmnet(x,y, alpha = cv.lasso$lambda.1se)
 
-#for (i in 1:7) {
-#  results <- boot(data = train, statistic = rsq, R = 400, formula = ACTScore ~ WindSpeed + Humidity + as.factor(Gender) + as.factor(OutdoorJob) + #as.factor(OutdoorActivities) + as.factor(Pressure) + as.factor(UVIndex))
-  
-# print(i)
-  #rs[j] <- results$t0
-  #j <- j+1
-#}
 
-#rs
 ```
 
 
-```{r}
-plot(results)
-```
+
 
 
 

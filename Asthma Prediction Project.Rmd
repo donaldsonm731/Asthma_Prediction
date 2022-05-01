@@ -1370,3 +1370,63 @@ model <- train(ACTScore ~., data = training_dataset,
 print(model)
 #model$finalmodel
 ```
+
+
+
+
+```{r}
+library(arm)
+# Chapter 4
+set.seed(23)
+
+folds <- groupKFold(up_train$UserNo., k = 7) 
+
+# Chapter 5
+train_control <- trainControl(method = "LOOCV", index = folds)
+
+model1 <- train(ACTScore ~ Gender + WindSpeed + Temperature + Age + Humidity + UVIndex + OutdoorJob + OutdoorActivities + Pressure, data = up_train[,-ncol(up_train)], method = "lm", trControl = train_control)
+
+model2 <- train(ACTScore ~ WindSpeed + Humidity + Pressure + UVIndex, data = up_train[,-ncol(up_train)], method = "lm", trControl = train_control)
+
+#model3 <- train(ACTScore ~ Gender + WindSpeed + Temperature + Age + Humidity + UVIndex + OutdoorJob + OutdoorActivities + Pressure, data = up_train[,-ncol(up_train)], method = "'bayesglm'", trControl = train_control) # Package: arm
+# Bayesian regression, idea from: https://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/s12911-021-01704-6
+```
+
+
+```{r}
+#model1$results
+#model1$finalModel
+
+#model2$results
+#model2$finalModel
+summary(model1)
+summary(model2)
+```
+
+```{r}
+
+
+rsq <- function(formula, data, indices) {
+  d <- data[indices,]
+  fit <- lm(formula, data=d)
+  return(summary(fit)$r.squared)
+}
+
+rs <- vector()
+j <- 1
+
+#for (i in 1:7) {
+#  results <- boot(data = train, statistic = rsq, R = 400, formula = ACTScore ~ WindSpeed + Humidity + as.factor(Gender) + as.factor(OutdoorJob) + #as.factor(OutdoorActivities) + as.factor(Pressure) + as.factor(UVIndex))
+  
+# print(i)
+  #rs[j] <- results$t0
+  #j <- j+1
+#}
+
+#rs
+```
+
+
+```{r}
+plot(results)
+```
