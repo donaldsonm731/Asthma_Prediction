@@ -150,10 +150,12 @@ Looking at frequency and distribution of the ACT score that each user
 self reported.
 
 ```{r}
-jpeg(file="saving_plot1.jpeg") 
-ggplot(asthmaData, aes(x = ACTScore)) +
-  geom_histogram(fill = "white", colour = "black", bins = 20) +
-  facet_grid(UserNo. ~ .)
+
+#jpeg(file="saving_plot1.jpeg") 
+#ggplot(asthmaData, aes(x = ACTScore)) +
+#  geom_histogram(fill = "white", colour = "black", bins = 20) +
+#  facet_grid(UserNo. ~ .)
+
 ```
 
 ## Splitting into Train & Test
@@ -161,29 +163,36 @@ ggplot(asthmaData, aes(x = ACTScore)) +
 ```{r}
 set.seed(28)
 
-groups <-        # Randomly assign train/test groups to all values of UserNo.
-  asthmaData %>%
-  select(UserNo.) %>%
-  distinct(UserNo.) %>%
-  rowwise() %>%
-  mutate(group = sample(
-    c("train", "test"),
-    1,
-    replace = TRUE,
-    prob = c(0.8, 0.2) 
-  ))
-
-groups
+#groups <-        # Randomly assign train/test groups to all values of UserNo.
+#  asthmaData %>%
+#  select(asthmaData$UserNo.) %>%
+#  distinct(asthmaData$UserNo.) %>%
+#  rowwise() %>%
+#  mutate(group = sample(
+#    c("train", "test"),
+#    1,
+#    replace = TRUE,
+#    prob = c(0.8, 0.2) 
+#  ))
+#groups
 
 # Join group assignments to my_dat
-asthmaData <- asthmaData %>%
-  left_join(groups)
+#asthmaData <- asthmaData %>%
+#  left_join(groups)
 
-train = filter(asthmaData, group == "train")
 #validation = filter(asthmaData, group == "validation")
-test = filter(asthmaData, group == "test")
+#test = filter(asthmaData, group == "test")
 
-dim(train)
+#dim(train)
+
+#index = which(asthmaData$UserNo. == c(1,2,3,5,7,9,10))
+
+```
+
+```{r}
+train = subset(asthmaData, UserNo. %in% c(1,2,3,5,7,9,10))
+test = subset(asthmaData, UserNo. %in% c(4,6,8))
+
 ```
 
 ```{r}
