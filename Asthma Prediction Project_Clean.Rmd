@@ -480,8 +480,80 @@ model4 = glmnet(x,y, alpha = cv.lasso$lambda.1se)
 ```
 
 
+```{r}
+
+list = list(3,5,7,9,10)
+RMSE1 = vector(length = length(list))
+RMSE2 = vector(length = length(list))
+RMSE3 = vector(length = length(list))
+RMSE4 = vector(length = length(list))
+
+R21 = vector(length = length(list))
+R22 = vector(length = length(list))
+R23 = vector(length = length(list))
+R24 = vector(length = length(list))
+
+MAE1 = vector(length = length(list))
+MAE2 = vector(length = length(list))
+MAE3 = vector(length = length(list))
+MAE4 = vector(length = length(list))
+
+j = 0
+for (subj in list){
+  
+  train.cv = subset(train, UserNo. %ni% c(subj))
+  validate.cv = subset(train, UserNo. %in% c(subj))
+  
+  model3 = lm(model3$model, data = train.cv)
+ 
+  prediction3 = predict(model3, validate.cv, interval="predict") 
+  
+  #R23[j] = R2(prediction3, validate.cv $ ACTScore)
+  #RMSE3[j] = RMSE(prediction3, validate.cv $ ACTScore) 
+  #MAE3[j] = MAE(prediction3, validate.cv $ ACTScore)
+  
+  
+  j = j + 1
+  
+  
+}
 
 
+
+
+```
+
+```{r}
+
+model3$model$Age
+
+```
+## Boot
+
+```{r}
+
+
+rsq <- function(formula, data, indices) {
+  d <- data[indices,]
+  fit <- lm(formula, data=d)
+  return(summary(fit)$r.squared)
+}
+
+rs <- vector()
+j <- 1
+
+  results3 <- boot(data = train, statistic = rsq, R = 1000, formula = model3)
+
+  
+# print(i)
+#  rs[j] <- results$t0
+#  j <- j+1
+#}
+
+#rs
+ # results$t
+  boot.ci(results3,type="perc",index=1)
+```
 
 
 # Predicting on validation set
