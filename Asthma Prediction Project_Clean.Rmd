@@ -190,8 +190,15 @@ set.seed(28)
 ```
 
 ```{r}
-train = subset(asthmaData, UserNo. %in% c(1,2,3,5,7,9,10))
-test = subset(asthmaData, UserNo. %in% c(4,6,8))
+set.seed(300)
+#train = subset(asthmaData, UserNo. %in% c(1,2,3,5,7,9,10))
+#test = subset(asthmaData, UserNo. %in% c(4,6,8))
+
+samp = createDataPartition(asthmaData$ACTScore, p = 0.7, list = F)
+
+train = asthmaData[samp,]# note: it just so happens that pressure level 1003 (only one instance) is in the training.
+test = asthmaData[-samp,]
+#test = test[-which(test$Pressure == 1003),]
 
 ```
 
@@ -353,6 +360,8 @@ train$WindSpeed = scale(train$WindSpeed, scale = TRUE)
 test$Humidity = scale(test$Humidity, scale = TRUE)
 test$Temperature = scale(test$Temperature, scale = TRUE)
 test$WindSpeed = scale(test$WindSpeed, scale = TRUE)
+
+
 ```
 
 
@@ -366,14 +375,18 @@ test$WindSpeed = scale(test$WindSpeed, scale = TRUE)
 backmodel1 <- lmerTest::lmer(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
 
 step_res1 <- lmerTest::step(backmodel1)
-final1 <- get_model(step_res1)
-anova(final1)
+model1 <- get_model(step_res1)
+anova(model1)
 step_res1
 
 
 ```
 
+```{r}
 
+model1
+
+```
 
 ## Testing lasso with model
 
@@ -479,6 +492,31 @@ model4 = glmnet(x,y, alpha = cv.lasso$lambda.1se)
 
 ```
 
+```{r}
+https://rdrr.io/github/pbreheny/hdrm/man/boot.glmnet.html
+remotes::install_github("pbreheny/hdrm") # Requires the remotes package
+
+```
+
+```{r}
+#library(pbreheny)
+library(hdrm)
+CI = boot.glmnet(x, y, B = 500, 0.100456, 300, alpha = 0.05, bar = TRUE)
+
+
+
+
+```
+
+
+```{r}
+
+CI
+
+
+```
+
+
 
 ```{r}
 
@@ -523,11 +561,7 @@ for (subj in list){
 
 ```
 
-```{r}
 
-model3$model$Age
-
-```
 ## Boot
 
 ```{r}
@@ -542,33 +576,26 @@ rsq <- function(formula, data, indices) {
 rs <- vector()
 j <- 1
 
-  results3 <- boot(data = train, statistic = rsq, R = 1000, formula = model3)
+  results3 <- boot(data = test, statistic = rsq, R = 1000, formula = model3)
 
   
-# print(i)
-#  rs[j] <- results$t0
-#  j <- j+1
-#}
-
-#rs
- # results$t
-  boot.ci(results3,type="perc",index=1)
+boot.ci(results3,type="perc",index=1)
+results3$t0
 ```
 
 
 # Predicting on validation set
 ```{r}
-#pred_l = predict(model_l, validation, interval="predict") 
-#error_l = round(pred_l) - validation$ACTScore
-#error_l
+pred3 = predict(model3, test, interval="predict") 
+error3 = round(pred3) - test$ACTScore
 
 #pred_sb = predict(model_sb, validation, interval='predict')
 #error_sb =  round(pred_sb[,1]) - validation$ACTScore
 #error_sb
 
-#data.frame(R2 = R2(pred_l, validation $ ACTScore),
-#           RMSE = RMSE(pred_l, validation $ ACTScore), 
-#           MAE = MAE(pred_l, validation $ ACTScore))
+data.frame(R2 = R2(pred3, test $ ACTScore),
+           RMSE = RMSE(pred3, test $ ACTScore), 
+           MAE = MAE(pred3, test $ ACTScore))
 
 #data.frame(R2 = R2(pred_sb, validation $ ACTScore), 
 #           RMSE = RMSE(pred_sb, validation $ ACTScore), 
