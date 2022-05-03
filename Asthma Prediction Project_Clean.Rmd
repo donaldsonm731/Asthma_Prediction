@@ -409,18 +409,12 @@ for (i in 1:n)  {
   
 }
 
-```
-
-```{r}
-#install.packages("sampling")  
-library(sampling)  
-
-strata(train, stratanames = c("Pressure","UserNo."), size  = c(5,5),  
-       method = c("srswr"),   description = FALSE)  
 #unique(train$Pressure)
 #unique(train_boot$Pressure)
 #unique(OOB$Pressure)
 ```
+
+
 
 ## Models
 
@@ -441,9 +435,46 @@ step_res1
 
 
 ```{r}
+########################################################################
+## This gives a boot strap of the r squared 
 
-model1
+model.lmer = lmerTest::lmer(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
 
+rsq <- function(formula) {
+  fit <- lm(formula)
+  return(summary(fit)$r.squared)
+}
+
+boot.stats = bootMer(model.lmer, rsq, nsim = 10, seed = 46, use.u = FALSE, re.form=NA,
+	type = c("parametric", "semiparametric"),
+	verbose = FALSE, .progress = "none", PBargs = list(),
+	parallel = c("no", "multicore", "snow"),
+	ncpus = getOption("boot.ncpus", 1L), cl = NULL)
+
+```
+
+```{r}
+# Looking at value of r2
+boot.stats$t
+boot.stats$t0
+boot::boot.ci(boot.stats, index=1, type=c("norm", "basic", "perc")) #Gives C.I.
+
+```
+
+```{r}
+
+## This gives a boot strap of the MSE 
+mse <- function(formula) {
+  fit <- lmer(formula)
+  return(summary(fit)$r.squared)
+}
+
+boot.stats = bootMer(model.lmer, mse, nsim = 4, seed = 46, use.u = FALSE, re.form=NA,
+	type = c("parametric", "semiparametric"),
+	verbose = FALSE, .progress = "none", PBargs = list(),
+	parallel = c("no", "multicore", "snow"),
+	ncpus = getOption("boot.ncpus", 1L), cl = NULL)
+#############################################################################
 ```
 
 ## Testing lasso with model
@@ -562,6 +593,7 @@ remotes::install_github("pbreheny/hdrm") # Requires the remotes package
 ```{r}
 #library(pbreheny)
 library(hdrm)
+
 CI = boot.glmnet(x, y, B = 500, 0.100456, 300, alpha = 0.05, bar = TRUE)
 
 
@@ -570,60 +602,8 @@ CI = boot.glmnet(x, y, B = 500, 0.100456, 300, alpha = 0.05, bar = TRUE)
 ```
 
 
-```{r}
 
-CI
-
-
-```
-
-
-
-```{r}
-
-list = list(3,5,7,9,10)
-RMSE1 = vector(length = length(list))
-RMSE2 = vector(length = length(list))
-RMSE3 = vector(length = length(list))
-RMSE4 = vector(length = length(list))
-
-R21 = vector(length = length(list))
-R22 = vector(length = length(list))
-R23 = vector(length = length(list))
-R24 = vector(length = length(list))
-
-MAE1 = vector(length = length(list))
-MAE2 = vector(length = length(list))
-MAE3 = vector(length = length(list))
-MAE4 = vector(length = length(list))
-
-j = 0
-for (subj in list){
-  
-  train.cv = subset(train, UserNo. %ni% c(subj))
-  validate.cv = subset(train, UserNo. %in% c(subj))
-  
-  model3 = lm(model3$model, data = train.cv)
- 
-  prediction3 = predict(model3, validate.cv, interval="predict") 
-  
-  #R23[j] = R2(prediction3, validate.cv $ ACTScore)
-  #RMSE3[j] = RMSE(prediction3, validate.cv $ ACTScore) 
-  #MAE3[j] = MAE(prediction3, validate.cv $ ACTScore)
-  
-  
-  j = j + 1
-  
-  
-}
-
-
-
-
-```
-
-
-## Boot
+## Bootstrap lm function
 
 ```{r}
 
@@ -634,15 +614,38 @@ rsq <- function(formula, data, indices) {
   return(summary(fit)$r.squared)
 }
 
+
 rs <- vector()
 j <- 1
 
-results3 <- boot(data = test, statistic = rsq, R = 1000, formula = model3)
+results3 <- boot(data = train, statistic = rsq, R = 10, formula = model3)
 
   
 boot.ci(results3,type="perc",index=1)
-results3$t
+results3$t0
 
+
+```
+
+```{r}
+
+
+mse <- function(formula, data, indices) {
+  d <- data[indices,]
+  fit <- lm(formula, data=d)
+  return(sum(fit$residuals^2))
+}
+
+
+rs <- vector()
+j <- 1
+
+results3 <- boot(data =train, statistic = mse, R = 10, formula = model3)
+
+  
+boot.ci(results3,type="perc",index=1)
+results3$t0
+###############################################################################
 
 ```
 
