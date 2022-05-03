@@ -371,19 +371,36 @@ test$WindSpeed = scale(test$WindSpeed, scale = TRUE)
 # strap function that would work on the different models.
 library(resample)
 set.seed(18)
+n = 1
+sample_index = samp.bootstrap(n = dim(train)[1], R =n, size = dim(train)[1], reduceSize = 0)
 
-sample_index = samp.bootstrap(n = dim(train)[1], R =10, size = dim(train)[1], reduceSize = 0)
-
-for (i in 1:10)  {
+for (i in 1:n)  {
   # taking sampled indices and making the data set to put into model
   # as well as the out of bag (OOB) indices to "validate".
   train_boot = train[sample_index[,i],]
   OOB  = train[-sample_index[,i],]
   
+  # Training different models and predicting on them with the out of bag values
+  model1 = lmerTest::lmer(ACTScore ~ WindSpeed  + Humidity + Gender + OutdoorJob  + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train_boot)
+  
+  
+  
+    
+    
   model3 = lm(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + OutdoorJob + 
     Pressure + UVIndex, data = train_boot)
   
+  x = data.matrix(train_boot[,c('Humidity', 'Temperature', 'Pressure', 'Age', 'Gender', 'UVIndex', 'OutdoorJob', 'OutdoorActivities', 'SmokingHabit', 'WindSpeed')])
+  y = train_boot[,'ACTScore']
+
+  model4 = glmnet(x,y, alpha = cv.lasso$lambda.1se)
+  
+  # Predicting on OOB samles based on trained set
+  pred1 = predict(model1, OOB, interval="predict") 
+  
   pred3 = predict(model3, OOB, interval="predict") 
+  
+  pred4 = predict(model3, OOB, interval="predict") 
   
   
   
@@ -392,6 +409,13 @@ for (i in 1:10)  {
 
 
 ```
+
+```{r}
+sum(pred1 - OOB$ACTScore)
+sum(pred3- OOB$ACTScore)
+sum(pred4- OOB$ACTScore)
+```
+
 ## Models
 
 ### Backward feature selection
