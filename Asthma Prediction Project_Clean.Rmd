@@ -365,6 +365,33 @@ test$WindSpeed = scale(test$WindSpeed, scale = TRUE)
 ```
 
 
+```{r}
+
+# just trying to write own boot strap, honestly got fed up with finding a boot
+# strap function that would work on the different models.
+library(resample)
+set.seed(18)
+
+sample_index = samp.bootstrap(n = dim(train)[1], R =10, size = dim(train)[1], reduceSize = 0)
+
+for (i in 1:10)  {
+  # taking sampled indices and making the data set to put into model
+  # as well as the out of bag (OOB) indices to "validate".
+  train_boot = train[sample_index[,i],]
+  OOB  = train[-sample_index[,i],]
+  
+  model3 = lm(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + OutdoorJob + 
+    Pressure + UVIndex, data = train_boot)
+  
+  pred3 = predict(model3, OOB, interval="predict") 
+  
+  
+  
+}
+
+
+
+```
 ## Models
 
 ### Backward feature selection
@@ -493,6 +520,7 @@ model4 = glmnet(x,y, alpha = cv.lasso$lambda.1se)
 ```
 
 ```{r}
+
 https://rdrr.io/github/pbreheny/hdrm/man/boot.glmnet.html
 remotes::install_github("pbreheny/hdrm") # Requires the remotes package
 
