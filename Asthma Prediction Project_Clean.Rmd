@@ -75,49 +75,57 @@ Coding Cat. Data:
 ## Importing
 
 ```{r}
-asthmaDataOriginal= read.csv("Asthma_Data_File.csv")  # Importing the data set 
+################################################################################
+# Importing the data set 
+asthmaDataOriginal= read.csv("Asthma_Data_File.csv")  
 
-asthmaData = data.frame(asthmaDataOriginal[,-2])  # Removing id number for each subject
+# Removing id number for each subject and copying original file to not corrupt it
+asthmaData = data.frame(asthmaDataOriginal[,-2])  
 
+# Looking at data
 head(asthmaData)  #Looking at the first 6 entries
 dim(asthmaData)
 ```
 
-### Data Description
+## Data Description
 
 The first summary doesn't give us to much information because half the
 inputs are chr. So, before looking at the properties of each feature we
-need to convert the strings to integers.
+need to factor the data.
 
 ```{r}
 # Summary gives a description for each input and output, giving you a sense of what the data looks like
 summary(asthmaData)
+
 ```
 
-Removing the subject number and all the non categorical data. Then
-factoring each input. Now there are levels for each categorical input.
+Factoring is done in two stages. One for variables were there is an order and 
+one for no order. For no order the lapply() function is used and for when we want
+to specify order the factor() function with order = TRUE is used. The we check using
+the str() function.
 
 ```{r}
-# Only want  to factor the categories so removing the columns listed below.
-# These are: temp, humidity, windspeed and ACTScore.
+# Only want  to factor the categories.
+# Ordered categorical variables: Age, OutDoorJob, OutDoorActivities, UVIndex
+# Else: just categorical variables to factor.
+# Continuous Varaibale: temp, humidity, windspeed and pressure
+# Dependent variable: ACTScore
 names = names(asthmaData[,c(1,2, 4,7)]) 
 asthmaData[,names] = lapply(asthmaData[,names], factor)
 
 asthmaData[,3] = factor(asthmaData[,3], order = TRUE, levels = c("19-30", "31-40", "41-50", "Above 50"))
 asthmaData[,5] = factor(asthmaData[,5], order = TRUE, levels = c("Rarely", "Occasionally", "Frequently"))
 asthmaData[,6] = factor(asthmaData[,6], order = TRUE, levels = c("Not at all likely", "Neither likely or dislikely", "Extremely likely"))
-asthmaData[,9] = factor(asthmaData[,9], order = TRUE, levels = c("1003", "1004", "1005", "1006", "1007", "1008", "1009", "1010", "1011", "1012", "1013", "1014"))
 asthmaData[,11] = factor(asthmaData[,11], order = TRUE, levels = c("Low", "Extreme"))
 
 str(asthmaData)
 
 ```
 
+Next we aim to see the distribution for each variable and subjects by bar plots
+and histograms. As can be seen from the plots below, we have unbalanced instances
+for subjects, outdoor activities and jobs...
 
-
-
-
-Bar plots and histograms give us an idea of the data in each category.
 
 ```{r}
 barplot(prop.table(table(asthmaData$UserNo.)), main = 'Subject')
@@ -126,131 +134,72 @@ barplot(prop.table(table(asthmaData$Gender)), main = 'Gender')
 barplot(prop.table(table(asthmaData$OutdoorJob)), main = 'Out Door Job')
 barplot(prop.table(table(asthmaData$OutdoorActivities)), main = 'Out Door Activities')
 barplot(prop.table(table(asthmaData$SmokingHabit)), main = 'Smoking Habit')
-barplot(prop.table(table(asthmaData$Pressure)), main = 'Pressure')
 barplot(prop.table(table(asthmaData$UVIndex)), main = 'UV Index')
 
 hist(asthmaData$Humidity, breaks = 25, main = 'Humidity')
 hist(asthmaData$Temperature, breaks = 25, main = 'temp')
 hist(asthmaData$WindSpeed, breaks = 25, main = 'wind')
+hist(asthmaData$Pressure, breaks = 12, main = 'Pressure')
 hist(asthmaData$ACTScore,breaks = 17, main = 'ACT score')
 ```
 
+This is just to get the actual values for each level in the groups based on the 
+bar and histograms above.
 ```{r}
 table(asthmaData$Age) 
 table(asthmaData$Gender)
 table(asthmaData$OutdoorJob)
 table(asthmaData$OutdoorActivities)
 table(asthmaData$SmokingHabit)
-table(asthmaData$Pressure)
 table(asthmaData$UVIndex)
 table(asthmaData$ACTScore)
+################################################################################
 ```
 
-Looking at frequency and distribution of the ACT score that each user
-self reported.
 
-```{r}
 
-#jpeg(file="saving_plot1.jpeg") 
-#ggplot(asthmaData, aes(x = ACTScore)) +
-#  geom_histogram(fill = "white", colour = "black", bins = 20) +
-#  facet_grid(UserNo. ~ .)
-
-```
 
 ## Splitting into Train & Test
 
+Before anything else, we split the data into a training and test set. This ensures
+that we do not have any data leakage when we standardize our training set and so
+the test set is left alone.
 ```{r}
-set.seed(28)
+################################################################################
+set.seed(24)
 
-#groups <-        # Randomly assign train/test groups to all values of UserNo.
-#  asthmaData %>%
-#  select(asthmaData$UserNo.) %>%
-#  distinct(asthmaData$UserNo.) %>%
-#  rowwise() %>%
-#  mutate(group = sample(
-#    c("train", "test"),
-#    1,
-#    replace = TRUE,
-#    prob = c(0.8, 0.2) 
-#  ))
-#groups
+library(dplyr)
+training <- sample(unique(asthmaData$UserNo.), 7, replace = FALSE)
+training
 
-# Join group assignments to my_dat
-#asthmaData <- asthmaData %>%
-#  left_join(groups)
+train <- asthmaData %>% filter(asthmaData$UserNo. %in% training)
+test <-  asthmaData %>% filter(!asthmaData$UserNo. %in% training)
 
-#validation = filter(asthmaData, group == "validation")
-#test = filter(asthmaData, group == "test")
+# This is only used to ensure that once we remove the outliers we done continue
+# to remove more indices if we run more than once. (Forshadowing to fix a problem)
+train_original = train
 
-#dim(train)
-
-#index = which(asthmaData$UserNo. == c(1,2,3,5,7,9,10))
-
+# Looking at dimensions of training and test set
+dim(train)
+dim(test)
+################################################################################
 ```
 
-```{r}
-set.seed(300)
-train = subset(asthmaData, UserNo. %in% c(1,2,3,5,7,9,10))
-test = subset(asthmaData, UserNo. %in% c(4,6,8))
 
-#samp = createDataPartition(asthmaData$ACTScore, p = 0.7, list = F)
+## Outlier Detection
 
-#train = asthmaData[samp,]# note: it just so happens that pressure level 1003 (only one instance) is in the training.
-#test = asthmaData[-samp,]
-#test = test[-which(test$Pressure == 1003),]
 
-```
-
-```{r}
-# Train Set
-# Catagorical Data
-subject = train$UserNo.
-loc = train$Location
-gender = train$Gender
-age = train$Age
-ODJ = train$OutdoorJob
-ODA = train$OutdoorActivities
-smoking = train$SmokingHabit
-pressure = train$Pressure
-uv = train$UVIndex
-# Continous Data
-temp = train$Temperature
-hum = train$Humidity
-wind = train$WindSpeed
-# Y value
-ACT = train$ACTScore
-
-# Test Set
-# Catagorical Data
-test_subject = test$UserNo.
-test_loc = test$Location
-test_gender = test$Gender
-test_age = test$Age
-test_ODJ = test$OutdoorJob
-test_ODA = test$OutdoorActivities
-test_smoking = test$SmokingHabit
-test_pressure = test$Pressure
-test_uv = test$UVIndex
-# Continous Data
-test_temp = test$Temperature
-test_hum = test$Humidity
-test_wind = test$WindSpeed
-# Y value
-test_ACT = test$ACTScore
-```
-
-## Finding outliers in the categorical/numeric data
 
 To find outliers, we will have a box plot of each input that is
 categorical and put it against the inputs that are continuous.Finding
 the outliers using Boxplot (finds points outside 1.5\*IQR), as well as
 to get a better understanding the distribution of the features a box
-plot was made. We do this for each, train and test, set.
+plot was made. We do this for the training set.
 
-First plotting 1 categorical input at a time with temp humidity
+First plotting humidity against the categorical variables
 
 ```{r}
+###############################################################################
 ## NEED TO USE PACKAGE car for this to work because of the upper case B
 
 # This box and whisker plot created the boxplot and also labels the points that are 
@@ -260,22 +209,19 @@ First plotting 1 categorical input at a time with temp humidity
 
 # Source for this: http://www.unige.ch/ses/sococ/cl/r/bapr.e.html
 
-outlier_ageH = as.numeric(Boxplot(hum~age))
-outlier_genderH = as.numeric(Boxplot(hum~gender))
-outlier_smH = as.numeric(Boxplot(hum~smoking))
-outlier_ODJH = as.numeric(Boxplot(hum~ODJ))
-outlier_ODAH = as.numeric(Boxplot(hum~ODA))
-outlier_pH = as.numeric(Boxplot(hum~pressure))
-outlier_UVH = as.numeric(Boxplot(hum~uv))
+outlier_ageH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Age))
+outlier_genderH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Gender))
+outlier_smH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$SmokingHabit))
+outlier_odjH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$OutdoorJob))
+outlier_odaH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$OutdoorActivities))
+outlier_uvH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$UVIndex))
 
-# The last part combines all the outlier indices found as a vector and keeps all 
-# number once, so say 114 is stored twice then the unique() will just take one 
-# of them out
-totOutlier_H = c(outlier_ageH, outlier_genderH, outlier_smH, outlier_ODJH, outlier_ODAH,outlier_pH, outlier_UVH)
-table(totOutlier_H)
+# The last part combines all the outlier indices found as a vector
+totOutlier_H = c(outlier_ageH, outlier_genderH, outlier_smH, outlier_odjH, outlier_odaH, outlier_uvH)
+table(totOutlier_H) # Potential outlier indecies
 ```
 
-Next plotting 1 cat. at a time with
+Next plotting temp. against cat.
 
 ```{r}
 ## NEED TO USE PACKAGE car for this to work because of the upper case B
@@ -285,23 +231,23 @@ Next plotting 1 cat. at a time with
 # numberic and store it as an outlier. I think take the union of all the outliers
 # to keep track of when looking at other inputs that are continuous.
 
-outlier_ageT = as.numeric(Boxplot(temp~age))
-outlier_genderT = as.numeric(Boxplot(temp~gender))
-outlier_smT = as.numeric(Boxplot(temp~smoking))
-outlier_ODJT = as.numeric(Boxplot(temp~ODJ))
-outlier_ODAT = as.numeric(Boxplot(temp~ODA))
-outlier_pT = as.numeric(Boxplot(temp~pressure))
-outlier_UVT = as.numeric(Boxplot(temp~uv))
+outlier_ageT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$Age))
+outlier_genderT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$Gender))
+outlier_smT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$SmokingHabit))
+outlier_odjT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$OutdoorJob))
+outlier_odaT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$OutdoorActivities))
+outlier_pT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$Pressure))
+outlier_uvT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$UVIndex))
 
 # The last part combines all the outlier indices found as a vector and keeps all 
 # number once, so say 114 is stored twice then the unique() will just take one 
 # of them out
-totOutlier_T= c(outlier_ageT, outlier_genderT, outlier_smT, outlier_ODJT, outlier_ODAT,outlier_pT, outlier_UVT)
+totOutlier_T= c(outlier_ageT, outlier_genderT, outlier_smT, outlier_odjT, outlier_odaT,outlier_pT, outlier_uvT)
 
 table(totOutlier_T)
 ```
 
-lastly, plotting 1 cat at a time with windspeed
+plotting windspeed with cat.
 
 ```{r}
 # This box and whisker plot created the boxplot and also labels the points that are 
@@ -309,65 +255,156 @@ lastly, plotting 1 cat at a time with windspeed
 # numberic and store it as an outlier. I think take the union of all the outliers
 # to keep track of when looking at other inputs that are continuous.
 
-outlier_ageW = as.numeric(Boxplot(wind~age))
-outlier_genderW = as.numeric(Boxplot(wind~gender))
-outlier_smW = as.numeric(Boxplot(wind~smoking))
-outlier_ODJW = as.numeric(Boxplot(wind~ODJ))
-outlier_ODAW = as.numeric(Boxplot(wind~ODA))
-outlier_pW = as.numeric(Boxplot(wind~pressure))
-outlier_UVW = as.numeric(Boxplot(wind~uv))
+outlier_ageW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$Age))
+outlier_genderW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$Gender))
+outlier_smW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$SmokingHabit))
+outlier_odjW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$OutdoorJob))
+outlier_odaW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$OutdoorActivities))
+outlier_uvW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$UVIndex))
 
 # The last part combines all the outlier indices found as a vector and keeps all 
 # number once, so say 114 is stored twice then the unique() will just take one 
 # of them out
 
-totOutlier_W = c(outlier_ageW, outlier_genderW, outlier_smW, outlier_ODJW, outlier_ODAW,outlier_pW, outlier_UVW)
+totOutlier_W = c(outlier_ageW, outlier_genderW, outlier_smW, outlier_odjW, outlier_odaW, outlier_uvW)
 table(totOutlier_W)
 
+```
 
-#Looking at the total amount of outliers now:
+Plotting pressure with cat.
+```{r}
+# This box and whisker plot created the boxplot and also labels the points that are 
+# 1.5 times outside the IQR, I then take those points, convert them from chr to
+# numberic and store it as an outlier. I think take the union of all the outliers
+# to keep track of when looking at other inputs that are continuous.
+
+outlier_ageP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$Age))
+outlier_genderP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$Gender))
+outlier_smP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$SmokingHabit))
+outlier_odjP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$OutdoorJob))
+outlier_odaP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$OutdoorActivities))
+outlier_uvP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$UVIndex))
+
+# The last part combines all the outlier indices found as a vector and keeps all 
+# number once, so say 114 is stored twice then the unique() will just take one 
+# of them out
+
+totOutlier_P = c(outlier_ageP, outlier_genderP, outlier_smP, outlier_odjP, outlier_uvP)
+table(totOutlier_P)
+
+```
 
 
-totOutliers = c(totOutlier_H, totOutlier_T, totOutlier_W)
-#length(totOutliers)
-#table(totOutliers)
-#table(totOutliers) > 1
-#which(table(totOutliers) > 1)
+Now combining all indices found to be potential outliers and taking any indices 
+that was found more than once.
+```{r}
+# Combines all outliers into on vector.
+totOutliers = c(totOutlier_H, totOutlier_T, totOutlier_W, totOutlier_P)
 
-repOutliers = which(table(totOutliers) > 1) #Gives the indices for the the ones that show up more than once. 
+#Gives the indices for the the ones that show up more than once. 
+repOutliers = which(table(totOutliers) > 1) 
 
 # This ensures that if we run the code again it will not take more
 # Data out, just noticed it was going down when this was not added
-if(dim(train)[1] == 757){
+
+# Here we use the train_original from when we made the test set to compare if 
+# outliers have already been taken out.
+if(dim(train)[1] == dim(train_original)[1]){
   train= train[-c(repOutliers),]
 }
 # Visual help that outliers are only removed once
 dim(asthmaData)
 dim(train)
 length(repOutliers)
-
+################################################################################
 ```
 
 
 ## Standardize Data set
 
 ```{r}
+################################################################################
 ## standard normalize of continuous variable for mixture model.
 train$Humidity = scale(train$Humidity, scale = TRUE)
 train$Temperature = scale(train$Temperature, scale = TRUE)
 train$WindSpeed = scale(train$WindSpeed, scale = TRUE)
+train$Pressure = scale(train$Pressure, scale = TRUE)
 
 test$Humidity = scale(test$Humidity, scale = TRUE)
 test$Temperature = scale(test$Temperature, scale = TRUE)
 test$WindSpeed = scale(test$WindSpeed, scale = TRUE)
+test$Pressure = scale(test$Pressure, scale = TRUE)
+################################################################################
+```
+
+
+## Feature Selection for mixed effects model
+
+We first perform backwards feature selection with our mixed effects model. In the
+step() function from lmerTest package, the function first looks at the significance of
+random effects then looks at the fixed effects. Picks values to drop based on 
+p-values. 
+```{r}
+################################################################################
+
+# https://www.rdocumentation.org/packages/lmerTest/versions/2.0-36/topics/step
+
+model.lmer.step <- lmerTest::lmer(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
+
+step_res.lmer <- lmerTest::step(model.lmer.step)
+model.lmer <- get_model(step_res.lmer)
+anova(model.lmer)
+step_res.lmer
 
 
 ```
+From the output above we can see the model found is:
+ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex
+
+From this first we notice that none of the random effects are used. 
+And then also 6 varaibles are left.
+
+
+## Feature Selection for fixed linear model
+
+Next we do feature selection on a fixed linear model. This function chooses the 
+features to from by AIC (), but other wise same process as step() function above.
+```{r}
+model.lm <- lm(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex, data = train)
+
+step_res.lm <- step(model.lm)
+
+###############################################################################
+```
+
+model found from above:
+ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex
+Notice this is the same as if we first started out with random effect!!!
+
+```{r}
+model.lm = lm(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex, data = train)
+################################################################################
+```
+
+## Bootstrapping C.I. for parameters
+
+
+## Predict on Test Set
+
+
+
+
+
+
+
+
+
+
 
 
 
 ```{r}
-################# IGNORE THIS SECTION FOR NOW
+################# 
 # just trying to write own boot strap, honestly got fed up with finding a boot
 # strap function that would work on the different models.
 library(resample)
@@ -391,7 +428,9 @@ for (i in 1:n)  {
    Pressure + UVIndex, data = train_boot)
   
 
-  
+   pred3 = predict(model3, OOB, interval="predict") 
+   
+   
   #x = data.matrix(train_boot[,c('Humidity', 'Temperature', 'Pressure', 'Age', 'Gender', 'UVIndex', 'OutdoorJob', 'OutdoorActivities', 'SmokingHabit', 'WindSpeed')])
  # y = train_boot[,'ACTScore']
 
@@ -400,7 +439,7 @@ for (i in 1:n)  {
   # Predicting on OOB samles based on trained set
   #pred1 = predict(model1, OOB, interval="predict") 
   
-  #pred3 = predict(model3, OOB, interval="predict") 
+ 
   
   #newData = as.data.frame(OOB[,c('Humidity', 'Temperature', 'Pressure', 'Age', 'Gender', 'UVIndex', 'OutdoorJob', 'OutdoorActivities', 'SmokingHabit', 'WindSpeed')])
   #pred4 = predict(model4, newData, interval="predict") 
@@ -420,18 +459,7 @@ for (i in 1:n)  {
 
 ### Backward feature selection
 
-```{r}
 
-
-backmodel1 <- lmerTest::lmer(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
-
-step_res1 <- lmerTest::step(backmodel1)
-model1 <- get_model(step_res1)
-anova(model1)
-step_res1
-
-
-```
 
 
 ```{r}
@@ -579,24 +607,6 @@ variables = variables[variables %ni% '(Intercept)']
 variables
 
 model4 = glmnet(x,y, alpha = cv.lasso$lambda.1se)
-
-
-```
-
-```{r}
-
-https://rdrr.io/github/pbreheny/hdrm/man/boot.glmnet.html
-remotes::install_github("pbreheny/hdrm") # Requires the remotes package
-
-```
-
-```{r}
-#library(pbreheny)
-library(hdrm)
-
-CI = boot.glmnet(x, y, B = 500, 0.100456, 300, alpha = 0.05, bar = TRUE)
-
-
 
 
 ```

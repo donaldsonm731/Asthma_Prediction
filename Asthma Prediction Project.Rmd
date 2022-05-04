@@ -1429,4 +1429,44 @@ j <- 1
 
 ```{r}
 plot(results)
+
+
 ```
+
+
+
+
+To save a plot
+```{r}
+
+#jpeg(file="saving_plot1.jpeg") 
+#ggplot(asthmaData, aes(x = ACTScore)) +
+#  geom_histogram(fill = "white", colour = "black", bins = 20) +
+#  facet_grid(UserNo. ~ .)
+
+```
+
+```{r}
+groups <- unique(asthmaData$UserNo.)    # Randomly assign train/test groups to all values of UserNo.
+  #asthmaData %>%
+  #select(,UserNo.) %>%
+  #distinct(UserNo.) %>%
+  #rowwise() %>%
+  #mutate(group = sample(
+    #c("train", "test"),
+    #1,
+    #replace = TRUE,
+    #prob = c(0.8, 0.2) 
+  #))
+groups
+
+# Join group assignments to my_dat
+#asthmaData <- asthmaData %>%
+  #left_join(groups)
+
+```
+
+
+
+
+#test = filter(asthmaData, group == "test")
