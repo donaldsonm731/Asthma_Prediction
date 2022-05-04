@@ -166,7 +166,7 @@ that we do not have any data leakage when we standardize our training set and so
 the test set is left alone.
 ```{r}
 ################################################################################
-set.seed(24)
+set.seed(50)
 
 library(dplyr)
 training <- sample(unique(asthmaData$UserNo.), 7, replace = FALSE)
@@ -182,6 +182,8 @@ train_original = train
 # Looking at dimensions of training and test set
 dim(train)
 dim(test)
+str(test)
+summary(train)
 ################################################################################
 ```
 
@@ -408,9 +410,9 @@ summary(model.lm)
 ```
 
 
-## C.I. for coefficients
+## C.I. for coefficients for lm
 ```{r}
-################################################################################
+
 model.lm$coefficients
 confint(model.lm)
 
@@ -434,11 +436,13 @@ model.glmnet = glmnet(x,y, alpha = 1,lambda = best_lambda)
 coef(model.glmnet)
 
 #confint(model.glmnet)
-
+###############################################################################
 ```
 
-# LOOCV for glm
+## Picking a model through Leave one out CV (by subject)
+# LOOCV for glmnet
 ```{r}
+################################################################################
 library(rsample)
 library(Matrix)
 set.seed(23)
@@ -448,18 +452,18 @@ splits <- group_vfold_cv(train, group = "UserNo.", v = 7)
 
 Caret_splits <- rsample2caret(splits)
 
-#names(Caret_splits)
+tunegrid = expand.grid(alpha = 0:1, lambda=seq(0.0001, 1, length = 20))
 
 tc_grouped <- trainControl(method = "cv", number = 7, 
                            index = Caret_splits$index,
                            indexOut = Caret_splits$indexOut)
 
 model.glmnet.loocv<- train(ACTScore ~ Temperature + WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex , data = train, 
-                   method = "glmnet", family = "gaussian",
+                   method = "glmnet", family = "gaussian", tuneGrid = tunegrid,
                    trControl = tc_grouped)
 
-model.glmnet.loosv$results
-
+model.glmnet.loocv$results
+which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)
 ```
 
 
@@ -468,20 +472,48 @@ model.glmnet.loosv$results
 ```{r}
 library(rsample)
 
-model.lm.loocv <- train(x = train[,3:12], y = train[,13], 
-                   method = "lm", family = "gaussian",
+model.lm.loocv <- train(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex, 
+                   data = train, method = "lm", family = "gaussian",
                    trControl = tc_grouped)
 
 model.lm.loocv$results
-#train_control <- trainControl(method = "LOOCV")
-#model.lm.loocv<- train(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + 
- #   Pressure + UVIndex, data = train, method = "lm",trControl = train_control)
-#print(model.lm.loocv)
+
 ```
 
+# Comparing results
+```{r}
+model.lm.loocv$results$RMSE
+model.glmnet.loocv$results$RMSE[which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)[2]]
+
+
+model.lm.loocv$results$Rsquared
+model.glmnet.loocv$results$Rsquared[which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)[2]]
+
+model.lm.loocv$results$MAE
+model.glmnet.loocv$results$MAE[which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)[2]]
+
+```
+
+The list above shows the MSE, R^2 and MAE for lm and glmnet. From this we feel that
+the lm model is a better fit because it has a higher R^2 for just a little more 
+MSE and MAE.
+
 ## Predict on Test Set
+```{r}
+###############################################################################
+#WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex data.frame(test[,c(4,5,8,9,11,12)])
+library(caret)
 
+model.lm = lm(ACTScore ~ WindSpeed + Humidity + Gender + Pressure + OutdoorJob+ UVIndex, data = train)
+y_pred = predict(model.lm, newdata = test, interval = "prediction")
 
+data.frame(R2 = R2(y_pred, test $ ACTScore),
+           RMSE = RMSE(y_pred, test $ ACTScore), 
+           MAE = MAE(y_pred, test $ ACTScore))
+
+model.lm$coefficients
+
+```
 
 
 
