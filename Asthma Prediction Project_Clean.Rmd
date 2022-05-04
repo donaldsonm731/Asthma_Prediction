@@ -338,6 +338,22 @@ test$Pressure = scale(test$Pressure, scale = TRUE)
 ```
 
 
+## Understanding Correlation b/w variables through VIF number
+
+We try and understand the correlation of a variable through the VIF number.
+VIF provides an index that measure show much the variance of an estimated 
+regression coefficient is increased because of linearity. If VIF is above
+5 or 10 then it is an indication that the associated regression coefficients are 
+poorly estimated due to multicollinearity.
+```{r}
+library(faraway)
+model.vif = lm(ACTScore ~ Temperature + WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex, data = train)
+
+vif(model.vif)
+
+
+```
+
 ## Feature Selection for mixed effects model
 
 We first perform backwards feature selection with our mixed effects model. In the
@@ -349,7 +365,7 @@ p-values.
 
 # https://www.rdocumentation.org/packages/lmerTest/versions/2.0-36/topics/step
 
-model.lmer.step <- lmerTest::lmer(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
+model.lmer.step <- lmerTest::lmer(ACTScore ~ Temperature + WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex + (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
 
 step_res.lmer <- lmerTest::step(model.lmer.step)
 model.lmer <- get_model(step_res.lmer)
@@ -370,7 +386,7 @@ And then also 6 varaibles are left.
 Next we do feature selection on a fixed linear model. This function chooses the 
 features to from by AIC (), but other wise same process as step() function above.
 ```{r}
-model.lm <- lm(ACTScore ~ WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex, data = train)
+model.lm <- lm(ACTScore ~ Temperature + WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex, data = train)
 
 step_res.lm <- step(model.lm)
 
@@ -387,6 +403,7 @@ model.lm = lm(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure +
 ```
 
 ## Bootstrapping C.I. for parameters
+
 
 
 ## Predict on Test Set
