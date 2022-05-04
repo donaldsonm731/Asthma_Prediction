@@ -5,6 +5,12 @@ humidity, temperature, pressure, UV index and wind speed). In this project
 we aim to go through the data analytics process to come up with a good model 
 for predicting asthma attack severity.
 
+Code to look at: It is the clean version. The first R code (Asthma Prediction 
+                 Project) is were we have ended up putting a lot of code that 
+                 we don't need anymore, aka what we have tried and ended up 
+                 determining not to use.
+
+
 IMPORTANT STEPS TO TAKE WHEN EDITING THIS PROJECT:
 1. ALWAYS PULL BEFORE EDITING
 	- In command prompt go to project folder by cd path name. 
@@ -17,7 +23,3 @@ IMPORTANT STEPS TO TAKE WHEN EDITING THIS PROJECT:
 		- git commit -m'put_message_here'
                 - git push
 
-
-Questions:
- - machine learning workflow as Machine Learning Morphism (MLM)
- - outlier detection method
