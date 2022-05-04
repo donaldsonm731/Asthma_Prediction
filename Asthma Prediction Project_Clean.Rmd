@@ -404,14 +404,9 @@ Notice this is the same as if we first started out with random effect!!!
 ```{r}
 
 model.lm = lm(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex, data = train)
-
-```
-
-```{r}
-
 summary(model.lm)
-
 ```
+
 
 ## C.I. for coefficients
 ```{r}
@@ -423,36 +418,66 @@ confint(model.lm)
 
 ```
 
+## Lasso woth linear model
 
 ```{r}
-# Bootstrapping C.I. for lmer function (to see/for experience)
-model.lmer <- lmerTest::lmer(ACTScore ~ Temperature + WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex+ (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
-```
 
+'%ni%' = Negate('%in%')
+x = data.matrix(train[,c('Humidity', 'Temperature', 'Pressure', 'Age', 'Gender', 'UVIndex', 'OutdoorJob', 'OutdoorActivities', 'SmokingHabit', 'WindSpeed')])
+y = train[,'ACTScore']
 
-```{r}
-coef(model.lmer)
-#lmer.coef <- function(lmer.model) {
-#  c <- c(lmer.model$fixed,lmer.model$rand)
-#  return(c)
-#}
+model.glmnet.cv = cv.glmnet(x,y, alpha = 1)
+best_lambda = model.glmnet.cv$lambda.min
+#plot(model.glmnet)
 
-# The model.lmer is used because this saves time as we dont need to recompute 
-# a mixed model when it was already done earlier.
-#lmer.boot.stats = bootMer(model.lmer.step, lmer.coef, nsim = 10, seed = 46)
+model.glmnet = glmnet(x,y, alpha = 1,lambda = best_lambda)
+coef(model.glmnet)
 
-```
-
-
-
-```{r}
-# Looking at value of r2
-lmer.boot.stats$t
-lmer.boot.stats$t0
-boot::boot.ci(lmer.boot.stats, index=1, type=c("norm", "basic", "perc")) #Gives C.I.
+#confint(model.glmnet)
 
 ```
 
+# LOOCV for glm
+```{r}
+library(rsample)
+library(Matrix)
+set.seed(23)
+
+
+splits <- group_vfold_cv(train, group = "UserNo.", v = 7)
+
+Caret_splits <- rsample2caret(splits)
+
+#names(Caret_splits)
+
+tc_grouped <- trainControl(method = "cv", number = 7, 
+                           index = Caret_splits$index,
+                           indexOut = Caret_splits$indexOut)
+
+model.glmnet.loocv<- train(ACTScore ~ Temperature + WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex , data = train, 
+                   method = "glmnet", family = "gaussian",
+                   trControl = tc_grouped)
+
+model.glmnet.loosv$results
+
+```
+
+
+
+# LOOCV for lm
+```{r}
+library(rsample)
+
+model.lm.loocv <- train(x = train[,3:12], y = train[,13], 
+                   method = "lm", family = "gaussian",
+                   trControl = tc_grouped)
+
+model.lm.loocv$results
+#train_control <- trainControl(method = "LOOCV")
+#model.lm.loocv<- train(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + 
+ #   Pressure + UVIndex, data = train, method = "lm",trControl = train_control)
+#print(model.lm.loocv)
+```
 
 ## Predict on Test Set
 
@@ -710,7 +735,34 @@ data.frame(R2 = R2(BestModel, test $ ACTScore),
 
 
 
+```{r}
+# Bootstrapping C.I. for lmer function (to see/for experience)
+model.lmer <- lmerTest::lmer(ACTScore ~ Temperature + WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex+ (1|UserNo.) + (1|Location) + (0 + Gender|UserNo.) + (0 + Gender|Location) + (0 + Age|UserNo.) + (0 + Age|Location), data = train)
+```
 
+
+```{r}
+coef(model.lmer)
+#lmer.coef <- function(lmer.model) {
+#  c <- c(lmer.model$fixed,lmer.model$rand)
+#  return(c)
+#}
+
+# The model.lmer is used because this saves time as we dont need to recompute 
+# a mixed model when it was already done earlier.
+#lmer.boot.stats = bootMer(model.lmer.step, lmer.coef, nsim = 10, seed = 46)
+
+```
+
+
+
+```{r}
+# Looking at value of r2
+lmer.boot.stats$t
+lmer.boot.stats$t0
+boot::boot.ci(lmer.boot.stats, index=1, type=c("norm", "basic", "perc")) #Gives C.I.
+
+```
 
 
 
