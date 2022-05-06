@@ -370,7 +370,7 @@ step_res.lm <- step(model.lm)
 ###############################################################################
 ```
 
-model found from above:
+Model found from above:
 ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex
 Notice this is the same as if we first started out with random effect!!!
 
@@ -386,10 +386,9 @@ model.lm$coefficients
 confint(model.lm)
 ```
 
-## Lasso woth linear model
+## Lasso with linear model
 
 ```{r}
-'%ni%' = Negate('%in%')
 x = data.matrix(train[,c('Humidity', 'Temperature', 'Pressure', 'Age', 'Gender', 'UVIndex', 'OutdoorJob', 'OutdoorActivities', 'SmokingHabit', 'WindSpeed')])
 y = train[,'ACTScore']
 
@@ -405,7 +404,20 @@ coef(model.glmnet)
 ```
 
 ## Picking a model through Leave one out CV (by subject)
-# LOOCV for glmnet
+
+### LOOCV for lm
+```{r}
+library(rsample)
+
+model.lm.loocv <- train(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex, 
+                   data = train, method = "lm", family = "gaussian",
+                   trControl = tc_grouped)
+
+model.lm.loocv$results
+
+```
+
+### LOOCV for glmnet
 ```{r}
 ################################################################################
 library(rsample)
@@ -432,20 +444,7 @@ which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)
 ```
 
 
-
-# LOOCV for lm
-```{r}
-library(rsample)
-
-model.lm.loocv <- train(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex, 
-                   data = train, method = "lm", family = "gaussian",
-                   trControl = tc_grouped)
-
-model.lm.loocv$results
-
-```
-
-# Comparing results
+## Comparing results
 ```{r}
 print(paste0("LM Model RMSE: ", round(model.lm.loocv$results$RMSE, digits = 3)))
 print(paste0("Lasso Model RMSE: ", round(model.glmnet.loocv$results$RMSE[which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)[2]], digits = 3)))
@@ -459,8 +458,8 @@ print(paste0("Lasso Model MAE: ", round(model.glmnet.loocv$results$MAE[which(mod
 
 ```
 
-The list above shows the MSE, R^2 and MAE for lm and glmnet. From this we feel that
-the lm model is a better fit because it has a higher R^2 for just a little more 
+The list above shows the MSE, $R^2$ and MAE for LM and Lasso. From this we feel that
+the LM model is a better fit because it has a higher $R^2$ and lowest 
 MSE and MAE.
 
 ## Predict on Test Set
