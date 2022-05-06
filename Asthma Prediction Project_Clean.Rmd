@@ -30,43 +30,18 @@ library(glmnet)
 library(glmmLasso)
 library(boot)
 library(arm)
-
-#install.packages(c("boot", "car", "caret", "tidyverse",  "effects", "foreign", 
-                   #"Hmisc", "DT", "knitr", "lme4", "MASS", "mlogit", "msm", 
-                   #"QuantPsyc", "reshape2", "rms", "sandwich", "sfsmisc", "sjPlot", 
-                   #"vcd", "visreg", "MuMIn", "lmerTest", "shiny"))
 ```
 
---\> how each subject rates their asthma --\> look at the type of
-factoring (maybe 0,1,2) --\> standardized after split into training
-
-lmer: reaction \~ days + (days\|subject)
-
-generalized linear model - randomness within the variance of the error
-term
-
-TO DO:
-
--   In lmerTest package function to use: step.lmerNodLmerTest() -\>
-    backward elimination of Rand/fixed effects
-
--   Also ANOVA() tests rand effects and drop1() tests fixed effects
-    (f-test).
-
--   Read panel data, (mixture model source)
-
--   make a decision on whether to have data from each participant or
-    hold out on 2 participants
-
-Sources: - Mixture model:
-<https://lme4.r-forge.r-project.org/slides/2011-03-16-Amsterdam/2Longitudinal.pdf> -
+Sources: 
+Mixture model:
+<https://lme4.r-forge.r-project.org/slides/2011-03-16-Amsterdam/2Longitudinal.pdf> 
 Catet Package:
-<https://topepo.github.io/caret/feature-selection-overview.html> -
+<https://topepo.github.io/caret/feature-selection-overview.html>
 Vraible selection:
-<https://cran.r-project.org/web/packages/olsrr/vignettes/variable_selection.html> -
-Boxplots: <http://www.unige.ch/ses/sococ/cl/r/bapr.e.html> - Regressing
-Cat. data:
-<https://advstats.psychstat.org/book/mregression/catpredictor.php> -
+<https://cran.r-project.org/web/packages/olsrr/vignettes/variable_selection.html> 
+Boxplots: <http://www.unige.ch/ses/sococ/cl/r/bapr.e.html> 
+Regressing Cat. data:
+<https://advstats.psychstat.org/book/mregression/catpredictor.php> 
 Coding Cat. Data:
 <https://stats.oarc.ucla.edu/r/modules/coding-for-categorical-variables-in-regression-models/>
 
@@ -166,11 +141,10 @@ that we do not have any data leakage when we standardize our training set and so
 the test set is left alone.
 ```{r}
 ################################################################################
-set.seed(50)
+set.seed(23)
 
 library(dplyr)
 training <- sample(unique(asthmaData$UserNo.), 7, replace = FALSE)
-training
 
 train <- asthmaData %>% filter(asthmaData$UserNo. %in% training)
 test <-  asthmaData %>% filter(!asthmaData$UserNo. %in% training)
@@ -182,7 +156,6 @@ train_original = train
 # Looking at dimensions of training and test set
 dim(train)
 dim(test)
-str(test)
 summary(train)
 ################################################################################
 ```
@@ -211,12 +184,12 @@ First plotting humidity against the categorical variables
 
 # Source for this: http://www.unige.ch/ses/sococ/cl/r/bapr.e.html
 
-outlier_ageH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Age))
-outlier_genderH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$Gender))
-outlier_smH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$SmokingHabit))
-outlier_odjH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$OutdoorJob))
-outlier_odaH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$OutdoorActivities))
-outlier_uvH = as.numeric(Boxplot(asthmaData$Humidity~asthmaData$UVIndex))
+outlier_ageH = as.numeric(Boxplot(train$Humidity~train$Age))
+outlier_genderH = as.numeric(Boxplot(train$Humidity~train$Gender))
+outlier_smH = as.numeric(Boxplot(train$Humidity~train$SmokingHabit))
+outlier_odjH = as.numeric(Boxplot(train$Humidity~train$OutdoorJob))
+outlier_odaH = as.numeric(Boxplot(train$Humidity~train$OutdoorActivities))
+outlier_uvH = as.numeric(Boxplot(train$Humidity~train$UVIndex))
 
 # The last part combines all the outlier indices found as a vector
 totOutlier_H = c(outlier_ageH, outlier_genderH, outlier_smH, outlier_odjH, outlier_odaH, outlier_uvH)
@@ -233,13 +206,13 @@ Next plotting temp. against cat.
 # numberic and store it as an outlier. I think take the union of all the outliers
 # to keep track of when looking at other inputs that are continuous.
 
-outlier_ageT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$Age))
-outlier_genderT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$Gender))
-outlier_smT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$SmokingHabit))
-outlier_odjT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$OutdoorJob))
-outlier_odaT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$OutdoorActivities))
-outlier_pT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$Pressure))
-outlier_uvT = as.numeric(Boxplot(asthmaData$Temperature~asthmaData$UVIndex))
+outlier_ageT = as.numeric(Boxplot(train$Temperature~train$Age))
+outlier_genderT = as.numeric(Boxplot(train$Temperature~train$Gender))
+outlier_smT = as.numeric(Boxplot(train$Temperature~train$SmokingHabit))
+outlier_odjT = as.numeric(Boxplot(train$Temperature~train$OutdoorJob))
+outlier_odaT = as.numeric(Boxplot(train$Temperature~train$OutdoorActivities))
+outlier_pT = as.numeric(Boxplot(train$Temperature~train$Pressure))
+outlier_uvT = as.numeric(Boxplot(train$Temperature~train$UVIndex))
 
 # The last part combines all the outlier indices found as a vector and keeps all 
 # number once, so say 114 is stored twice then the unique() will just take one 
@@ -257,12 +230,12 @@ plotting windspeed with cat.
 # numberic and store it as an outlier. I think take the union of all the outliers
 # to keep track of when looking at other inputs that are continuous.
 
-outlier_ageW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$Age))
-outlier_genderW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$Gender))
-outlier_smW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$SmokingHabit))
-outlier_odjW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$OutdoorJob))
-outlier_odaW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$OutdoorActivities))
-outlier_uvW = as.numeric(Boxplot(asthmaData$WindSpeed~asthmaData$UVIndex))
+outlier_ageW = as.numeric(Boxplot(train$WindSpeed~train$Age))
+outlier_genderW = as.numeric(Boxplot(train$WindSpeed~train$Gender))
+outlier_smW = as.numeric(Boxplot(train$WindSpeed~train$SmokingHabit))
+outlier_odjW = as.numeric(Boxplot(train$WindSpeed~train$OutdoorJob))
+outlier_odaW = as.numeric(Boxplot(train$WindSpeed~train$OutdoorActivities))
+outlier_uvW = as.numeric(Boxplot(train$WindSpeed~train$UVIndex))
 
 # The last part combines all the outlier indices found as a vector and keeps all 
 # number once, so say 114 is stored twice then the unique() will just take one 
@@ -280,12 +253,12 @@ Plotting pressure with cat.
 # numberic and store it as an outlier. I think take the union of all the outliers
 # to keep track of when looking at other inputs that are continuous.
 
-outlier_ageP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$Age))
-outlier_genderP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$Gender))
-outlier_smP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$SmokingHabit))
-outlier_odjP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$OutdoorJob))
-outlier_odaP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$OutdoorActivities))
-outlier_uvP = as.numeric(Boxplot(asthmaData$Pressure~asthmaData$UVIndex))
+outlier_ageP = as.numeric(Boxplot(train$Pressure~train$Age))
+outlier_genderP = as.numeric(Boxplot(train$Pressure~train$Gender))
+outlier_smP = as.numeric(Boxplot(train$Pressure~train$SmokingHabit))
+outlier_odjP = as.numeric(Boxplot(train$Pressure~train$OutdoorJob))
+outlier_odaP = as.numeric(Boxplot(train$Pressure~train$OutdoorActivities))
+outlier_uvP = as.numeric(Boxplot(train$Pressure~train$UVIndex))
 
 # The last part combines all the outlier indices found as a vector and keeps all 
 # number once, so say 114 is stored twice then the unique() will just take one 
@@ -377,8 +350,6 @@ step_res.lmer <- lmerTest::step(model.lmer.step)
 model.lmer <- get_model(step_res.lmer)
 anova(model.lmer)
 step_res.lmer
-
-
 ```
 From the output above we can see the model found is:
 ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex
@@ -404,7 +375,6 @@ ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex
 Notice this is the same as if we first started out with random effect!!!
 
 ```{r}
-
 model.lm = lm(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex, data = train)
 summary(model.lm)
 ```
@@ -412,18 +382,13 @@ summary(model.lm)
 
 ## C.I. for coefficients for lm
 ```{r}
-
 model.lm$coefficients
 confint(model.lm)
-
-
-
 ```
 
 ## Lasso woth linear model
 
 ```{r}
-
 '%ni%' = Negate('%in%')
 x = data.matrix(train[,c('Humidity', 'Temperature', 'Pressure', 'Age', 'Gender', 'UVIndex', 'OutdoorJob', 'OutdoorActivities', 'SmokingHabit', 'WindSpeed')])
 y = train[,'ACTScore']
@@ -482,15 +447,15 @@ model.lm.loocv$results
 
 # Comparing results
 ```{r}
-model.lm.loocv$results$RMSE
-model.glmnet.loocv$results$RMSE[which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)[2]]
+print(paste0("LM Model RMSE: ", round(model.lm.loocv$results$RMSE, digits = 3)))
+print(paste0("Lasso Model RMSE: ", round(model.glmnet.loocv$results$RMSE[which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)[2]], digits = 3)))
 
 
-model.lm.loocv$results$Rsquared
-model.glmnet.loocv$results$Rsquared[which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)[2]]
+print(paste0("LM Model R-Squared: ", round(model.lm.loocv$results$Rsquared, digits = 4)))
+print(paste0("Lasso Model R-Squared: ", round(model.glmnet.loocv$results$Rsquared[which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)[2]], digits = 4)))
 
-model.lm.loocv$results$MAE
-model.glmnet.loocv$results$MAE[which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)[2]]
+print(paste0("LM Model MAE: ", round(model.lm.loocv$results$MAE, digits = 3)))
+print(paste0("Lasso Model MAE: ", round(model.glmnet.loocv$results$MAE[which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)[2]], digits = 3)))
 
 ```
 
@@ -501,10 +466,8 @@ MSE and MAE.
 ## Predict on Test Set
 ```{r}
 ###############################################################################
-#WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex data.frame(test[,c(4,5,8,9,11,12)])
 library(caret)
 
-model.lm = lm(ACTScore ~ WindSpeed + Humidity + Gender + Pressure + OutdoorJob+ UVIndex, data = train)
 y_pred = predict(model.lm, newdata = test, interval = "prediction")
 
 data.frame(R2 = R2(y_pred, test $ ACTScore),
