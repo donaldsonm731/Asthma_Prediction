@@ -408,6 +408,15 @@ coef(model.glmnet)
 ### LOOCV for lm
 ```{r}
 library(rsample)
+set.seed(23)
+
+
+splits <- group_vfold_cv(train, group = "UserNo.", v = 7)
+
+Caret_splits <- rsample2caret(splits)
+tc_grouped <- trainControl(method = "cv", number = 7, 
+                           index = Caret_splits$index,
+                           indexOut = Caret_splits$indexOut)
 
 model.lm.loocv <- train(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex, 
                    data = train, method = "lm", family = "gaussian",
@@ -431,16 +440,14 @@ Caret_splits <- rsample2caret(splits)
 
 tunegrid = expand.grid(alpha = 0:1, lambda=seq(0.0001, 1, length = 20))
 
-tc_grouped <- trainControl(method = "cv", number = 7, 
-                           index = Caret_splits$index,
-                           indexOut = Caret_splits$indexOut)
+
 
 model.glmnet.loocv<- train(ACTScore ~ Temperature + WindSpeed + Age + SmokingHabit + Humidity + Gender + OutdoorJob + OutdoorActivities + Pressure + UVIndex , data = train, 
                    method = "glmnet", family = "gaussian", tuneGrid = tunegrid,
                    trControl = tc_grouped)
 
 model.glmnet.loocv$results
-which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)
+which(model.glmnet.loocv$results$lambda == model.glmnet.loocv$bestTune$lambda)[2]
 ```
 
 
@@ -476,3 +483,14 @@ data.frame(R2 = R2(y_pred, test $ ACTScore),
 model.lm$coefficients
 
 ```
+
+## Model Verification
+```{r}
+
+plot(model.lm)
+
+
+
+```
+
+
