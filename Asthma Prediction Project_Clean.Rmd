@@ -475,7 +475,7 @@ MSE and MAE.
 library(caret)
 
 y_pred = predict(model.lm, newdata = test, interval = "prediction")
-
+y_pred
 data.frame(R2 = R2(y_pred, test $ ACTScore),
            RMSE = RMSE(y_pred, test $ ACTScore), 
            MAE = MAE(y_pred, test $ ACTScore))
@@ -492,5 +492,10 @@ plot(model.lm)
 
 
 ```
+
+
+
+
+
 
 
