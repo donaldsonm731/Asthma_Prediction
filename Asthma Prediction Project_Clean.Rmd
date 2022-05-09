@@ -372,11 +372,11 @@ step_res.lm <- step(model.lm)
 
 Model found from above:
 ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex
-Notice this is the same as if we first started out with random effect!!!
 
 ```{r}
 model.lm = lm(ACTScore ~ WindSpeed + Humidity + Gender + OutdoorJob + Pressure + UVIndex, data = train)
 summary(model.lm)
+summary(model.lm)$sigma
 ```
 
 
@@ -398,6 +398,7 @@ best_lambda = model.glmnet.cv$lambda.min
 
 model.glmnet = glmnet(x,y, alpha = 1,lambda = best_lambda)
 coef(model.glmnet)
+best_lambda
 
 #confint(model.glmnet)
 ###############################################################################
@@ -486,15 +487,17 @@ model.lm$coefficients
 
 ## Model Verification
 ```{r}
+#plot(model.lm)
 
-plot(model.lm)
-
-
-
+y_pred = predict(model.lm, newdata = test, interval = "confidence")
+y_pred
 ```
 
 
 
+```{r}
+summary(model.lm)
+```
 
 
 
